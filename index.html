@@ -3,200 +3,956 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>活动礼包与参与记录管理</title>
+    <title>游戏运营协同管理后台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { padding: 20px; background: #f5f7fa; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-        h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 12px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-        input, select, button { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        button { cursor: pointer; background: #007bff; color: #fff; border: none; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        button.btn-danger { background: #dc3545; }
-        button.btn-danger:hover { background: #a71d2a; }
-        button.btn-edit { background: #28a745; margin-right: 4px; }
-        button.btn-edit:hover { background: #1e7e34; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
-        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
-        th { background: #f8fafc; font-weight: 600; }
-        tr:hover { background: #f1f5f9; }
-        .badge { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-        .badge-wx { background: #e8f5e9; color: #2e7d32; }
-        .badge-fb { background: #e3f2fd; color: #1565c0; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
-        .modal-content { background: #fff; padding: 24px; border-radius: 8px; width: 450px; max-width: 90%; }
-        .modal-footer { margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-8">
 
-<div class="container">
-    <h2>活动礼包发送与参与登记</h2>
+<div class="max-w-6xl mx-auto space-y-6">
 
-    <!-- 添加记录表单 -->
-    <div class="form-grid">
-        <input type="text" id="gameId" placeholder="游戏昵称 / 角色ID">
-        <select id="platform">
-            <option value="微信">微信</option>
-            <option value="FB">FB (Facebook)</option>
-        </select>
-        <input type="text" id="socialAccount" placeholder="微信/FB 名字或账号">
-        <input type="text" id="giftContent" placeholder="礼包内容 (如: 摄影参赛奖/特定兑换码)">
-        <select id="status">
-            <option value="已发放">已发放</option>
-            <option value="待审核">待审核</option>
-            <option value="待发放">待发放</option>
-        </select>
-        <button onclick="addRecord()">添加记录</button>
+    <!-- 顶部状态与功能切换栏 -->
+    <div class="bg-white p-5 rounded-xl shadow-sm space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-indigo-900 flex items-center gap-2">
+                    ⚔️ 游戏运营协同管理
+                    <span id="statusBadge" class="text-xs bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full font-semibold">连接中...</span>
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">云端数据实时同步，支持多人协作对账与发奖管理</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="refreshCurrentTab()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition cursor-pointer">
+                    🔄 刷新数据
+                </button>
+                <button type="button" onclick="exportCurrentCSV()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition cursor-pointer">
+                    📥 导出当前表格 (CSV)
+                </button>
+            </div>
+        </div>
+
+        <!-- 两个 Portion 的切换标签页 -->
+        <div class="flex border-b border-slate-200 gap-2 pt-2">
+            <button id="tabBillingBtn" type="button" onclick="switchPortion('billing')"
+                class="px-5 py-2.5 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
+                🎮 玩家充值流水账目
+            </button>
+            <button id="tabGiftBtn" type="button" onclick="switchPortion('gift')"
+                class="px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
+                🎁 开荒礼包发放记录
+            </button>
+        </div>
     </div>
 
-    <!-- 数据列表 -->
-    <table>
-        <thead>
-            <tr>
-                <th>编号</th>
-                <th>游戏角色/ID</th>
-                <th>社交渠道</th>
-                <th>微信/FB 名字</th>
-                <th>礼包内容</th>
-                <th>状态</th>
-                <th>登记时间</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="recordTableBody"></tbody>
-    </table>
+    <!-- ============================================================== -->
+    <!-- PORTION 1: 充值流水部分                                         -->
+    <!-- ============================================================== -->
+    <div id="portionBilling" class="space-y-6">
+        <!-- 充值指标看板 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日总充值</div>
+                <div class="text-2xl font-extrabold mt-1">RM <span id="todayTotal">0.00</span></div>
+                <div class="text-xs mt-1 opacity-90" id="todayCount">今日共 0 笔</div>
+            </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">累计总流水</div>
+                <div class="text-2xl font-extrabold mt-1">RM <span id="grandTotal">0.00</span></div>
+                <div class="text-xs mt-1 opacity-90" id="totalCount">全周期共 0 笔</div>
+            </div>
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">付费玩家数 (去重)</div>
+                <div class="text-2xl font-extrabold mt-1"><span id="uniquePlayers">0</span> 位</div>
+                <div class="text-xs mt-1 opacity-90">活跃充值账号</div>
+            </div>
+        </div>
+
+        <!-- 录入充值表单 -->
+        <div class="bg-white p-5 rounded-xl shadow-sm">
+            <h2 class="text-base font-bold text-slate-800 mb-4">✏️ 录入玩家充值流水</h2>
+            <form id="recordForm" onsubmit="saveRecord(event)" class="space-y-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">充值日期</label>
+                        <input type="date" id="formDate" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">玩家账号 / 游戏 ID</label>
+                        <input type="text" id="formAccountId" required placeholder="如: user_9981 或 角色名"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">购买项目</label>
+                        <select id="formProduct" onchange="onProductChange()" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option value="元宝">元宝 (自定义金额)</option>
+                            <option value="成长基金">成长基金 (RM 50)</option>
+                            <option value="至尊月卡">至尊月卡 (RM 100)</option>
+                            <option value="江湖月卡">江湖月卡 (RM 50)</option>
+                            <option value="其他定制道具">其他定制道具 (可填备注)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">充值金额 (RM)</label>
+                        <input type="number" step="0.01" id="formAmount" required placeholder="0.00"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="noteContainer" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">备注说明 (道具/礼包明细)</label>
+                    <input type="text" id="formNote" placeholder="例如：限定坐骑、改名卡等"
+                        class="w-full px-3 py-2 border border-indigo-200 bg-indigo-50/30 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end pt-1">
+                    <button type="submit" id="submitBtn"
+                        class="w-full md:w-48 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition cursor-pointer">
+                        ➕ 保存充值记录
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 统计图表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-2">📊 近 7 天流水趋势 (RM)</h3>
+                <div class="h-56"><canvas id="trendChart"></canvas></div>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm">
+                <h3 class="text-sm font-bold text-slate-700 mb-2">🍰 充值项目占比统计</h3>
+                <div class="h-56 flex items-center justify-center"><canvas id="productChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 流水列表 -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <h3 class="font-bold text-slate-800">📋 充值流水明细</h3>
+                <input type="text" id="searchInput" oninput="filterTable()" placeholder="🔍 搜索玩家账号 ID、项目或备注..."
+                    class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase">
+                            <th class="p-3.5">日期</th>
+                            <th class="p-3.5">玩家账号 ID</th>
+                            <th class="p-3.5">购买项目 / 备注</th>
+                            <th class="p-3.5">金额 (RM)</th>
+                            <th class="p-3.5 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordTableBody" class="divide-y divide-slate-100">
+                        <tr><td colspan="5" class="p-6 text-center text-slate-400">正在同步云端记录...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- PORTION 2: 开荒礼包独立部分                                     -->
+    <!-- ============================================================== -->
+    <div id="portionGift" class="space-y-6 hidden">
+        <!-- 礼包看板 -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gradient-to-br from-amber-500 to-amber-700 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">累计已发礼包</div>
+                <div class="text-2xl font-extrabold mt-1"><span id="giftTotalCount">0</span> 份</div>
+                <div class="text-xs mt-1 opacity-90">开荒全量发放统计</div>
+            </div>
+            <div class="bg-gradient-to-br from-rose-500 to-rose-700 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日发放礼包</div>
+                <div class="text-2xl font-extrabold mt-1"><span id="giftTodayCount">0</span> 份</div>
+                <div class="text-xs mt-1 opacity-90">今日新增领取玩家</div>
+            </div>
+            <div class="bg-gradient-to-br from-cyan-600 to-blue-800 text-white p-5 rounded-xl shadow-sm">
+                <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">防重复检测引擎</div>
+                <div class="text-2xl font-extrabold mt-1">实时拦截中</div>
+                <div class="text-xs mt-1 opacity-90">输入重复账号自动报警</div>
+            </div>
+        </div>
+
+        <!-- 发放表单 -->
+        <div class="bg-white p-5 rounded-xl shadow-sm">
+            <h2 class="text-base font-bold text-slate-800 mb-4">🎁 登记发放开荒礼包</h2>
+            <form id="giftForm" onsubmit="saveGift(event)" class="space-y-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">发放日期</label>
+                        <input type="date" id="giftDate" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white cursor-pointer focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">玩家账号 ID (查重)</label>
+                        <input type="text" id="giftAccountId" oninput="checkDuplicateGiftId()" required placeholder="输入账号检测重复..."
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">玩家角色名</label>
+                        <input type="text" id="giftPlayerName" required placeholder="如: 独孤求败"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">社交渠道</label>
+                        <select id="giftPlatform" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="微信">微信</option>
+                            <option value="FB">FB (Facebook)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">微信 / FB 名字</label>
+                        <input type="text" id="giftSocialName" required placeholder="对方社交账号/名字"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">礼包类型</label>
+                        <select id="giftName" required
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="新手开荒尊享礼包">新手开荒尊享礼包</option>
+                            <option value="首周冲级大礼包">首周冲级大礼包</option>
+                            <option value="帮会集结入驻礼包">帮会集结入驻礼包</option>
+                            <option value="推广测试专属特权包">推广测试专属特权包</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">发放备注 (选填)</label>
+                        <input type="text" id="giftNote" placeholder="例如：微信群发兑换码、邮件直发等"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- 报警提示 -->
+                <div id="duplicateAlertBox" class="hidden p-3 bg-rose-50 border border-rose-300 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+                    <span class="text-base">⚠️</span>
+                    <span id="duplicateAlertText" class="font-bold"></span>
+                </div>
+
+                <div class="flex justify-end pt-1">
+                    <button type="submit" id="giftSubmitBtn"
+                        class="w-full md:w-56 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg text-sm shadow transition cursor-pointer">
+                        🎁 确认并登记发放
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 礼包明细列表 -->
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <h3 class="font-bold text-slate-800">📋 开荒礼包已发放清单</h3>
+                <input type="text" id="giftSearchInput" oninput="filterGiftTable()" placeholder="🔍 搜索账号 ID、角色名、微信/FB 或礼包..."
+                    class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase">
+                            <th class="p-3.5">发放日期</th>
+                            <th class="p-3.5">账号 ID</th>
+                            <th class="p-3.5">角色名</th>
+                            <th class="p-3.5">渠道与名字</th>
+                            <th class="p-3.5">已发放礼包</th>
+                            <th class="p-3.5">备注</th>
+                            <th class="p-3.5 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="giftTableBody" class="divide-y divide-slate-100">
+                        <tr><td colspan="7" class="p-6 text-center text-slate-400">正在同步礼包记录...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
-<!-- 修改编辑弹窗 -->
-<div class="modal" id="editModal">
-    <div class="modal-content">
-        <h3>修改记录</h3>
-        <input type="hidden" id="editIndex">
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-            <label>游戏角色/ID: <input type="text" id="editGameId" style="width: 100%;"></label>
-            <label>社交渠道: 
-                <select id="editPlatform" style="width: 100%;">
-                    <option value="微信">微信</option>
-                    <option value="FB">FB (Facebook)</option>
-                </select>
-            </label>
-            <label>微信/FB 名字: <input type="text" id="editSocialAccount" style="width: 100%;"></label>
-            <label>礼包内容: <input type="text" id="editGiftContent" style="width: 100%;"></label>
-            <label>发放状态: 
-                <select id="editStatus" style="width: 100%;">
-                    <option value="已发放">已发放</option>
-                    <option value="待审核">待审核</option>
-                    <option value="待发放">待发放</option>
-                </select>
-            </label>
+<!-- ============================================================== -->
+<!-- 模态弹窗：编辑充值流水                                          -->
+<!-- ============================================================== -->
+<div id="editBillingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+        <h3 class="text-base font-bold text-slate-800 border-b pb-2">✏️ 修改充值记录</h3>
+        <input type="hidden" id="editBillingId">
+        <div class="space-y-3 text-xs font-semibold text-slate-600">
+            <div>
+                <label class="block mb-1">充值日期</label>
+                <input type="date" id="editBillingDate" class="w-full p-2 border rounded-lg text-sm bg-white">
+            </div>
+            <div>
+                <label class="block mb-1">玩家账号 / ID</label>
+                <input type="text" id="editBillingAccountId" class="w-full p-2 border rounded-lg text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1">购买项目</label>
+                    <select id="editBillingProduct" class="w-full p-2 border rounded-lg text-sm bg-white">
+                        <option value="元宝">元宝</option>
+                        <option value="成长基金">成长基金</option>
+                        <option value="至尊月卡">至尊月卡</option>
+                        <option value="江湖月卡">江湖月卡</option>
+                        <option value="其他定制道具">其他定制道具</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1">金额 (RM)</label>
+                    <input type="number" step="0.01" id="editBillingAmount" class="w-full p-2 border rounded-lg text-sm text-indigo-700 font-bold">
+                </div>
+            </div>
+            <div>
+                <label class="block mb-1">备注说明</label>
+                <input type="text" id="editBillingNote" class="w-full p-2 border rounded-lg text-sm">
+            </div>
         </div>
-        <div class="modal-footer">
-            <button onclick="closeModal()" style="background: #6c757d;">取消</button>
-            <button onclick="saveEdit()">保存修改</button>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" onclick="closeEditBillingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium">取消</button>
+            <button type="button" onclick="submitEditBilling()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- 模态弹窗：编辑开荒礼包记录                                      -->
+<!-- ============================================================== -->
+<div id="editGiftModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+        <h3 class="text-base font-bold text-slate-800 border-b pb-2">✏️ 修改礼包发放记录</h3>
+        <input type="hidden" id="editGiftId">
+        <div class="space-y-3 text-xs font-semibold text-slate-600">
+            <div>
+                <label class="block mb-1">发放日期</label>
+                <input type="date" id="editGiftDate" class="w-full p-2 border rounded-lg text-sm bg-white">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1">玩家账号 ID</label>
+                    <input type="text" id="editGiftAccountId" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+                <div>
+                    <label class="block mb-1">玩家角色名</label>
+                    <input type="text" id="editGiftPlayerName" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1">社交渠道</label>
+                    <select id="editGiftPlatform" class="w-full p-2 border rounded-lg text-sm bg-white">
+                        <option value="微信">微信</option>
+                        <option value="FB">FB (Facebook)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1">微信 / FB 名字</label>
+                    <input type="text" id="editGiftSocialName" class="w-full p-2 border rounded-lg text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block mb-1">礼包类型</label>
+                <select id="editGiftName" class="w-full p-2 border rounded-lg text-sm bg-white">
+                    <option value="新手开荒尊享礼包">新手开荒尊享礼包</option>
+                    <option value="首周冲级大礼包">首周冲级大礼包</option>
+                    <option value="帮会集结入驻礼包">帮会集结入驻礼包</option>
+                    <option value="推广测试专属特权包">推广测试专属特权包</option>
+                </select>
+            </div>
+            <div>
+                <label class="block mb-1">发放备注</label>
+                <input type="text" id="editGiftNote" class="w-full p-2 border rounded-lg text-sm">
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+            <button type="button" onclick="closeEditGiftModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium">取消</button>
+            <button type="button" onclick="submitEditGift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold">保存修改</button>
         </div>
     </div>
 </div>
 
 <script>
-    let records = JSON.parse(localStorage.getItem('event_records')) || [];
+    // ==============================================================
+    // 1. 基础配置与云端直连参数
+    // ==============================================================
+    const SUPABASE_BASE = "https://qrhdaptikzkoeggoayxc.supabase.co/rest/v1";
+    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGRhcHRpa3prb2VnZ29heXhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDk3OTUsImV4cCI6MjEwMzkyNTc5NX0.mtzWrY2AV-CSevh94yXcdbUwl5paKj_ashvflMmAbGY";
 
-    function renderTable() {
-        const tbody = document.getElementById('recordTableBody');
-        tbody.innerHTML = '';
+    const reqHeaders = {
+        "apikey": API_KEY,
+        "Authorization": "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    };
 
-        records.forEach((item, index) => {
-            const badgeClass = item.platform === '微信' ? 'badge-wx' : 'badge-fb';
-            tbody.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td><b>${escapeHtml(item.gameId)}</b></td>
-                    <td><span class="badge ${badgeClass}">${escapeHtml(item.platform)}</span></td>
-                    <td>${escapeHtml(item.socialAccount)}</td>
-                    <td>${escapeHtml(item.giftContent)}</td>
-                    <td>${escapeHtml(item.status)}</td>
-                    <td style="color: #666; font-size: 12px;">${item.date}</td>
-                    <td>
-                        <button class="btn-edit" onclick="openEdit(${index})">修改</button>
-                        <button class="btn-danger" onclick="deleteRecord(${index})">删除</button>
-                    </td>
-                </tr>
-            `;
-        });
+    let currentTab = 'billing';
+    let allBillingRecords = [];
+    let allGiftRecords = [];
+    let trendChartInstance = null;
+    let productChartInstance = null;
+
+    function initDate() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${day}`;
+        document.getElementById('formDate').value = todayStr;
+        document.getElementById('giftDate').value = todayStr;
+    }
+    initDate();
+
+    window.addEventListener('load', () => {
+        loadRecords();
+        loadGiftRecords();
+    });
+
+    function switchPortion(tab) {
+        currentTab = tab;
+        const billingDiv = document.getElementById('portionBilling');
+        const giftDiv = document.getElementById('portionGift');
+        const tabBillingBtn = document.getElementById('tabBillingBtn');
+        const tabGiftBtn = document.getElementById('tabGiftBtn');
+
+        if (tab === 'billing') {
+            billingDiv.classList.remove('hidden');
+            giftDiv.classList.add('hidden');
+            tabBillingBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabGiftBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
+            if (trendChartInstance) trendChartInstance.update();
+        } else {
+            billingDiv.classList.add('hidden');
+            giftDiv.classList.remove('hidden');
+            tabGiftBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-amber-600 text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabBillingBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
+        }
     }
 
-    function addRecord() {
-        const gameId = document.getElementById('gameId').value.trim();
-        const platform = document.getElementById('platform').value;
-        const socialAccount = document.getElementById('socialAccount').value.trim();
-        const giftContent = document.getElementById('giftContent').value.trim();
-        const status = document.getElementById('status').value;
+    function refreshCurrentTab() {
+        if (currentTab === 'billing') loadRecords();
+        else loadGiftRecords();
+    }
 
-        if (!gameId || !socialAccount) {
-            alert('请填写游戏角色ID和对应的社交账号名字！');
+    // ==============================================================
+    // 2. 充值流水模块逻辑 (含修改与云端更新)
+    // ==============================================================
+    function onProductChange() {
+        const prod = document.getElementById('formProduct').value;
+        const amtInput = document.getElementById('formAmount');
+        const noteBox = document.getElementById('noteContainer');
+        const noteInput = document.getElementById('formNote');
+
+        if (prod === '成长基金') amtInput.value = '50';
+        else if (prod === '至尊月卡') amtInput.value = '100';
+        else if (prod === '江湖月卡') amtInput.value = '50';
+        else if (prod === '元宝') {
+            if (amtInput.value === '50' || amtInput.value === '100') amtInput.value = '';
+        }
+
+        if (prod === '其他定制道具') {
+            noteBox.classList.remove('hidden');
+            noteInput.focus();
+        } else {
+            noteBox.classList.add('hidden');
+            noteInput.value = '';
+        }
+    }
+
+    async function loadRecords() {
+        const badge = document.getElementById('statusBadge');
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/recharge_records?select=*&order=record_date.desc,id.desc`, { headers: reqHeaders });
+            if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
+            allBillingRecords = await res.json();
+
+            badge.innerText = "云端已同步";
+            badge.className = "text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full font-semibold";
+
+            renderBillingDashboard(allBillingRecords);
+            renderBillingTable(allBillingRecords);
+            renderBillingCharts(allBillingRecords);
+        } catch (err) {
+            badge.innerText = "连接失败";
+            badge.className = "text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-semibold";
+            console.error(err);
+        }
+    }
+
+    async function saveRecord(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = '提交中...';
+
+        const record_date = document.getElementById('formDate').value;
+        const account_id = document.getElementById('formAccountId').value.trim();
+        const amount = parseFloat(document.getElementById('formAmount').value);
+        const product_type = document.getElementById('formProduct').value;
+        const note = document.getElementById('formNote').value.trim();
+
+        if (!account_id || isNaN(amount) || amount <= 0) {
+            alert('请完整填写账号与正确金额！');
+            btn.disabled = false;
+            btn.innerText = '➕ 保存充值记录';
             return;
         }
 
-        const now = new Date();
-        const dateStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/recharge_records`, {
+                method: "POST",
+                headers: reqHeaders,
+                body: JSON.stringify([{ record_date, account_id, amount, product_type, note }])
+            });
+            if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
 
-        records.unshift({ gameId, platform, socialAccount, giftContent, status, date: dateStr });
-        saveData();
-        renderTable();
+            document.getElementById('formAccountId').value = '';
+            document.getElementById('formAmount').value = '';
+            document.getElementById('formNote').value = '';
+            document.getElementById('noteContainer').classList.add('hidden');
+            document.getElementById('formProduct').value = '元宝';
+            document.getElementById('formAccountId').focus();
 
-        document.getElementById('gameId').value = '';
-        document.getElementById('socialAccount').value = '';
-        document.getElementById('giftContent').value = '';
-    }
-
-    function openEdit(index) {
-        const item = records[index];
-        document.getElementById('editIndex').value = index;
-        document.getElementById('editGameId').value = item.gameId;
-        document.getElementById('editPlatform').value = item.platform;
-        document.getElementById('editSocialAccount').value = item.socialAccount;
-        document.getElementById('editGiftContent').value = item.giftContent;
-        document.getElementById('editStatus').value = item.status;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-
-    function saveEdit() {
-        const index = document.getElementById('editIndex').value;
-        records[index].gameId = document.getElementById('editGameId').value.trim();
-        records[index].platform = document.getElementById('editPlatform').value;
-        records[index].socialAccount = document.getElementById('editSocialAccount').value.trim();
-        records[index].giftContent = document.getElementById('editGiftContent').value.trim();
-        records[index].status = document.getElementById('editStatus').value;
-
-        saveData();
-        renderTable();
-        closeModal();
-    }
-
-    function closeModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
-
-    function deleteRecord(index) {
-        if (confirm('确定删除该条记录吗？')) {
-            records.splice(index, 1);
-            saveData();
-            renderTable();
+            await loadRecords();
+        } catch (err) {
+            alert("保存流水失败: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '➕ 保存充值记录';
         }
     }
 
-    function saveData() {
-        localStorage.setItem('event_records', JSON.stringify(records));
+    function openEditBilling(id) {
+        const item = allBillingRecords.find(r => r.id === id);
+        if (!item) return;
+
+        document.getElementById('editBillingId').value = item.id;
+        document.getElementById('editBillingDate').value = item.record_date;
+        document.getElementById('editBillingAccountId').value = item.account_id;
+        document.getElementById('editBillingProduct').value = item.product_type;
+        document.getElementById('editBillingAmount').value = item.amount;
+        document.getElementById('editBillingNote').value = item.note || '';
+
+        document.getElementById('editBillingModal').classList.remove('hidden');
     }
 
-    function escapeHtml(str) {
-        return (str || '').replace(/[&<>"']/g, m => ({
+    function closeEditBillingModal() {
+        document.getElementById('editBillingModal').classList.add('hidden');
+    }
+
+    async function submitEditBilling() {
+        const id = document.getElementById('editBillingId').value;
+        const record_date = document.getElementById('editBillingDate').value;
+        const account_id = document.getElementById('editBillingAccountId').value.trim();
+        const product_type = document.getElementById('editBillingProduct').value;
+        const amount = parseFloat(document.getElementById('editBillingAmount').value);
+        const note = document.getElementById('editBillingNote').value.trim();
+
+        if (!account_id || isNaN(amount) || amount <= 0) {
+            alert('请填写正确的账号与金额！');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/recharge_records?id=eq.${id}`, {
+                method: "PATCH",
+                headers: reqHeaders,
+                body: JSON.stringify({ record_date, account_id, product_type, amount, note })
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message);
+
+            closeEditBillingModal();
+            await loadRecords();
+            alert('充值记录已成功修改并同步云端！');
+        } catch (err) {
+            alert("修改失败: " + err.message);
+        }
+    }
+
+    async function deleteBillingItem(id) {
+        if (!confirm('确定要删除这笔充值流水吗？')) return;
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/recharge_records?id=eq.${id}`, { method: "DELETE", headers: reqHeaders });
+            if (!res.ok) throw new Error((await res.json()).message);
+            await loadRecords();
+        } catch (err) {
+            alert("删除失败: " + err.message);
+        }
+    }
+
+    function renderBillingDashboard(records) {
+        const today = document.getElementById('formDate').value;
+        let todaySum = 0, todayCount = 0, grandSum = 0;
+        const playerSet = new Set();
+
+        records.forEach(r => {
+            const val = Number(r.amount);
+            grandSum += val;
+            playerSet.add(r.account_id);
+            if (r.record_date === today) {
+                todaySum += val;
+                todayCount++;
+            }
+        });
+
+        document.getElementById('todayTotal').innerText = todaySum.toFixed(2);
+        document.getElementById('todayCount').innerText = `今日共 ${todayCount} 笔`;
+        document.getElementById('grandTotal').innerText = grandSum.toFixed(2);
+        document.getElementById('totalCount').innerText = `全周期共 ${records.length} 笔`;
+        document.getElementById('uniquePlayers').innerText = playerSet.size;
+    }
+
+    function renderBillingTable(records) {
+        const tbody = document.getElementById('recordTableBody');
+        tbody.innerHTML = '';
+        if (records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">暂无任何流水记录</td></tr>';
+            return;
+        }
+
+        records.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
+
+            let tagColor = 'bg-slate-100 text-slate-700';
+            if (item.product_type === '元宝') tagColor = 'bg-amber-100 text-amber-800';
+            else if (item.product_type.includes('月卡')) tagColor = 'bg-purple-100 text-purple-800';
+            else if (item.product_type.includes('基金')) tagColor = 'bg-blue-100 text-blue-800';
+
+            const noteDisplay = item.note ? `<span class="text-xs text-slate-400 ml-1 font-normal">(${escapeHtml(item.note)})</span>` : '';
+
+            tr.innerHTML = `
+                <td class="p-3.5 text-slate-500 font-mono text-xs">${item.record_date}</td>
+                <td class="p-3.5 font-bold text-slate-800">${escapeHtml(item.account_id)}</td>
+                <td class="p-3.5">
+                    <span class="text-xs px-2.5 py-0.5 rounded font-medium ${tagColor}">${escapeHtml(item.product_type)}</span>
+                    ${noteDisplay}
+                </td>
+                <td class="p-3.5 font-bold text-indigo-700">RM ${Number(item.amount).toFixed(2)}</td>
+                <td class="p-3.5 text-right space-x-2">
+                    <button type="button" onclick="openEditBilling(${item.id})" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">修改</button>
+                    <button type="button" onclick="deleteBillingItem(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">删除</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterTable() {
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
+        const filtered = allBillingRecords.filter(r => 
+            (r.account_id || '').toLowerCase().includes(q) || 
+            (r.product_type || '').toLowerCase().includes(q) ||
+            (r.record_date || '').includes(q) ||
+            (r.note || '').toLowerCase().includes(q)
+        );
+        renderBillingTable(filtered);
+    }
+
+    function renderBillingCharts(records) {
+        if (!window.Chart) return;
+        const last7Days = [];
+        const dayMap = {};
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const str = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            last7Days.push(str);
+            dayMap[str] = 0;
+        }
+
+        const productMap = {};
+        records.forEach(r => {
+            if (dayMap[r.record_date] !== undefined) dayMap[r.record_date] += Number(r.amount);
+            productMap[r.product_type] = (productMap[r.product_type] || 0) + Number(r.amount);
+        });
+
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+        trendChartInstance = new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: last7Days.map(d => d.slice(5)),
+                datasets: [{
+                    label: '充值金额 (RM)',
+                    data: last7Days.map(d => dayMap[d]),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const prodCtx = document.getElementById('productChart').getContext('2d');
+        if (productChartInstance) productChartInstance.destroy();
+        productChartInstance = new Chart(prodCtx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(productMap).length ? Object.keys(productMap) : ['暂无数据'],
+                datasets: [{
+                    data: Object.values(productMap).length ? Object.values(productMap) : [1],
+                    backgroundColor: ['#f59e0b', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#64748b']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+        });
+    }
+
+    // ==============================================================
+    // 3. 开荒礼包模块逻辑 (含微信/FB、防重复与修改)
+    // ==============================================================
+    async function loadGiftRecords() {
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/gift_records?select=*&order=gift_date.desc,id.desc`, { headers: reqHeaders });
+            if (!res.ok) throw new Error((await res.json()).message);
+            allGiftRecords = await res.json();
+
+            renderGiftDashboard(allGiftRecords);
+            renderGiftTable(allGiftRecords);
+        } catch (err) {
+            console.error("加载礼包记录失败:", err);
+        }
+    }
+
+    function checkDuplicateGiftId() {
+        const inputId = document.getElementById('giftAccountId').value.trim().toLowerCase();
+        const alertBox = document.getElementById('duplicateAlertBox');
+        const alertText = document.getElementById('duplicateAlertText');
+
+        if (!inputId) {
+            alertBox.classList.add('hidden');
+            return null;
+        }
+
+        const found = allGiftRecords.find(item => item.account_id.toLowerCase() === inputId);
+
+        if (found) {
+            alertText.innerText = `【警告】该账号 [${found.account_id}] 已在 ${found.gift_date} 领取过 [${found.gift_name}]（角色: ${found.player_name}，${found.platform || '社交'}: ${found.social_name || '-'}），请勿重复发放！`;
+            alertBox.classList.remove('hidden');
+            return found;
+        } else {
+            alertBox.classList.add('hidden');
+            return null;
+        }
+    }
+
+    async function saveGift(e) {
+        e.preventDefault();
+
+        const duplicate = checkDuplicateGiftId();
+        if (duplicate) {
+            const proceed = confirm(`⚠️ 严重警告：系统检测到账号 [${duplicate.account_id}] 已经领过开荒礼包了！\n\n领取时间: ${duplicate.gift_date}\n角色名: ${duplicate.player_name}\n渠道: ${duplicate.platform || '社交'} - ${duplicate.social_name || '-'}\n\n你确定仍然要再次发放吗？`);
+            if (!proceed) return;
+        }
+
+        const btn = document.getElementById('giftSubmitBtn');
+        btn.disabled = true;
+        btn.innerText = '正在登记...';
+
+        const gift_date = document.getElementById('giftDate').value;
+        const account_id = document.getElementById('giftAccountId').value.trim();
+        const player_name = document.getElementById('giftPlayerName').value.trim();
+        const platform = document.getElementById('giftPlatform').value;
+        const social_name = document.getElementById('giftSocialName').value.trim();
+        const gift_name = document.getElementById('giftName').value;
+        const note = document.getElementById('giftNote').value.trim();
+
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/gift_records`, {
+                method: "POST",
+                headers: reqHeaders,
+                body: JSON.stringify([{ gift_date, account_id, player_name, platform, social_name, gift_name, note }])
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
+
+            document.getElementById('giftAccountId').value = '';
+            document.getElementById('giftPlayerName').value = '';
+            document.getElementById('giftSocialName').value = '';
+            document.getElementById('giftNote').value = '';
+            document.getElementById('duplicateAlertBox').classList.add('hidden');
+            document.getElementById('giftAccountId').focus();
+
+            await loadGiftRecords();
+            alert(`🎉 礼包发放登记成功！已发放给：${account_id} (${player_name})`);
+        } catch (err) {
+            alert("登记礼包失败: " + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '🎁 确认并登记发放';
+        }
+    }
+
+    function openEditGift(id) {
+        const item = allGiftRecords.find(r => r.id === id);
+        if (!item) return;
+
+        document.getElementById('editGiftId').value = item.id;
+        document.getElementById('editGiftDate').value = item.gift_date;
+        document.getElementById('editGiftAccountId').value = item.account_id;
+        document.getElementById('editGiftPlayerName').value = item.player_name;
+        document.getElementById('editGiftPlatform').value = item.platform || '微信';
+        document.getElementById('editGiftSocialName').value = item.social_name || '';
+        document.getElementById('editGiftName').value = item.gift_name;
+        document.getElementById('editGiftNote').value = item.note || '';
+
+        document.getElementById('editGiftModal').classList.remove('hidden');
+    }
+
+    function closeEditGiftModal() {
+        document.getElementById('editGiftModal').classList.add('hidden');
+    }
+
+    async function submitEditGift() {
+        const id = document.getElementById('editGiftId').value;
+        const gift_date = document.getElementById('editGiftDate').value;
+        const account_id = document.getElementById('editGiftAccountId').value.trim();
+        const player_name = document.getElementById('editGiftPlayerName').value.trim();
+        const platform = document.getElementById('editGiftPlatform').value;
+        const social_name = document.getElementById('editGiftSocialName').value.trim();
+        const gift_name = document.getElementById('editGiftName').value;
+        const note = document.getElementById('editGiftNote').value.trim();
+
+        if (!account_id || !player_name) {
+            alert('请完整填写账号与角色名！');
+            return;
+        }
+
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/gift_records?id=eq.${id}`, {
+                method: "PATCH",
+                headers: reqHeaders,
+                body: JSON.stringify({ gift_date, account_id, player_name, platform, social_name, gift_name, note })
+            });
+
+            if (!res.ok) throw new Error((await res.json()).message);
+
+            closeEditGiftModal();
+            await loadGiftRecords();
+            alert('礼包记录已成功修改并同步云端！');
+        } catch (err) {
+            alert("修改失败: " + err.message);
+        }
+    }
+
+    async function deleteGiftItem(id) {
+        if (!confirm('确定要删除这笔礼包发放记录吗？')) return;
+        try {
+            const res = await fetch(`${SUPABASE_BASE}/gift_records?id=eq.${id}`, { method: "DELETE", headers: reqHeaders });
+            if (!res.ok) throw new Error((await res.json()).message);
+            await loadGiftRecords();
+        } catch (err) {
+            alert("删除失败: " + err.message);
+        }
+    }
+
+    function renderGiftDashboard(records) {
+        const today = document.getElementById('giftDate').value;
+        let todayCount = 0;
+        records.forEach(r => {
+            if (r.gift_date === today) todayCount++;
+        });
+
+        document.getElementById('giftTotalCount').innerText = records.length;
+        document.getElementById('giftTodayCount').innerText = todayCount;
+    }
+
+    function renderGiftTable(records) {
+        const tbody = document.getElementById('giftTableBody');
+        tbody.innerHTML = '';
+
+        if (records.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">暂无开荒礼包发放记录</td></tr>';
+            return;
+        }
+
+        records.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
+
+            const isWX = (item.platform || '微信') === '微信';
+            const badgeClass = isWX ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+
+            tr.innerHTML = `
+                <td class="p-3.5 text-slate-500 font-mono text-xs">${item.gift_date}</td>
+                <td class="p-3.5 font-bold text-slate-900">${escapeHtml(item.account_id)}</td>
+                <td class="p-3.5 font-semibold text-amber-900">${escapeHtml(item.player_name)}</td>
+                <td class="p-3.5">
+                    <span class="text-xs px-2 py-0.5 rounded font-medium ${badgeClass}">${escapeHtml(item.platform || '微信')}</span>
+                    <span class="text-xs text-slate-700 font-medium ml-1">${escapeHtml(item.social_name || '-')}</span>
+                </td>
+                <td class="p-3.5">
+                    <span class="text-xs px-2.5 py-0.5 rounded font-medium bg-amber-100 text-amber-800">
+                        ${escapeHtml(item.gift_name)}
+                    </span>
+                </td>
+                <td class="p-3.5 text-xs text-slate-500">${escapeHtml(item.note || '-')}</td>
+                <td class="p-3.5 text-right space-x-2">
+                    <button type="button" onclick="openEditGift(${item.id})" class="text-xs text-amber-600 hover:text-amber-800 hover:underline cursor-pointer">修改</button>
+                    <button type="button" onclick="deleteGiftItem(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">删除</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filterGiftTable() {
+        const q = document.getElementById('giftSearchInput').value.trim().toLowerCase();
+        const filtered = allGiftRecords.filter(r => 
+            (r.account_id || '').toLowerCase().includes(q) || 
+            (r.player_name || '').toLowerCase().includes(q) ||
+            (r.platform || '').toLowerCase().includes(q) ||
+            (r.social_name || '').toLowerCase().includes(q) ||
+            (r.gift_name || '').toLowerCase().includes(q) ||
+            (r.note || '').toLowerCase().includes(q)
+        );
+        renderGiftTable(filtered);
+    }
+
+    // ==============================================================
+    // 4. 导出 CSV
+    // ==============================================================
+    function exportCurrentCSV() {
+        const d = new Date();
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        if (currentTab === 'billing') {
+            if (allBillingRecords.length === 0) return alert('充值流水暂无数据可导出');
+            let csv = '\uFEFF充值日期,玩家账号ID,购买项目,备注说明,充值金额(RM)\n';
+            allBillingRecords.forEach(r => {
+                csv += `"${r.record_date}","${r.account_id}","${r.product_type}","${r.note || ''}",${Number(r.amount).toFixed(2)}\n`;
+            });
+            downloadCSV(csv, `充值对账流水_${dateStr}.csv`);
+        } else {
+            if (allGiftRecords.length === 0) return alert('开荒礼包暂无数据可导出');
+            let csv = '\uFEFF发放日期,玩家账号ID,角色名,渠道,微信/FB名字,已发放礼包,备注\n';
+            allGiftRecords.forEach(r => {
+                csv += `"${r.gift_date}","${r.account_id}","${r.player_name}","${r.platform || '微信'}","${r.social_name || ''}","${r.gift_name}","${r.note || ''}"\n`;
+            });
+            downloadCSV(csv, `开荒礼包发放记录_${dateStr}.csv`);
+        }
+    }
+
+    function downloadCSV(content, filename) {
+        const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+    }
+
+    function escapeHtml(text) {
+        return (text || '').replace(/[&<>"']/g, m => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[m]));
     }
-
-    renderTable();
 </script>
+
 </body>
 </html>
