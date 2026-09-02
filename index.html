@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏充值管理系统 (云端协同版)</title>
+    <!-- 引入 TailwindCSS 样式库 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Chart.js 图表库 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 Supabase 官方 JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-8">
+
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- 顶部标题栏 -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-5 rounded-xl shadow-sm gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-indigo-900 flex items-center gap-2">
+                🎮 玩家充值流水记账
+                <span class="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full font-semibold">云端同步中</span>
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">数据实时储存于 Supabase，多人打开网页可实时协同对账</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="fetchRecords()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition">
+                🔄 刷新数据
+            </button>
+            <button onclick="exportToCSV()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+                📥 导出 Excel (CSV)
+            </button>
+        </div>
+    </div>
+
+    <!-- 数据指标看板 -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日总充值</div>
+            <div class="text-2xl font-extrabold mt-1">RM <span id="todayTotal">0.00</span></div>
+            <div class="text-xs mt-1 opacity-90" id="todayCount">今日共 0 笔</div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">累计总流水</div>
+            <div class="text-2xl font-extrabold mt-1">RM <span id="grandTotal">0.00</span></div>
+            <div class="text-xs mt-1 opacity-90" id="totalCount">全周期共 0 笔</div>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">充值玩家数 (去重)</div>
+            <div class="text-2xl font-extrabold mt-1"><span id="uniquePlayers">0</span> 位</div>
+            <div class="text-xs mt-1 opacity-90">活跃付费账号</div>
+        </div>
+    </div>
+
+    <!-- 极速录入表单 -->
+    <div class="bg-white p-5 rounded-xl shadow-sm">
+        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-1.5">
+            ✏️ 新增玩家充值记录
+        </h2>
+        <form id="recordForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+            <!-- 日期：自动默认当天 -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">充值日期</label>
+                <input type="date" id="formDate" required
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50">
+            </div>
+
+            <!-- 玩家账号 ID -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">玩家账号 / 游戏 ID</label>
+                <input type="text" id="formAccountId" required placeholder="如: user_9981 或 角色名"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+
+            <!-- 充值金额 -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">充值金额 (RM)</label>
+                <input type="number" step="0.01" id="formAmount" required placeholder="0.00"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-indigo-700">
+            </div>
+
+            <!-- 充值项目 -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">购买项目</label>
+                <select id="formProduct" required
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                    <option value="元宝">元宝</option>
+                    <option value="至尊月卡">至尊月卡</option>
+                    <option value="江湖月卡">江湖月卡</option>
+                    <option value="成长基金">成长基金</option>
+                    <option value="限时特惠包">限时特惠包</option>
+                    <option value="其他定制道具">其他定制道具</option>
+                </select>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="flex flex-col justify-end">
+                <button type="submit" id="submitBtn"
+                    class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition">
+                    ➕ 保存记录
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 统计图表区域 -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white p-5 rounded-xl shadow-sm">
+            <h3 class="text-sm font-bold text-slate-700 mb-2">📊 近 7 天流水趋势 (RM)</h3>
+            <div class="h-56">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-sm">
+            <h3 class="text-sm font-bold text-slate-700 mb-2">🍰 充值项目占比统计</h3>
+            <div class="h-56 flex items-center justify-center">
+                <canvas id="productChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 流水明细列表 -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+            <h3 class="font-bold text-slate-800">📋 充值流水明细</h3>
+            <input type="text" id="searchInput" oninput="filterTable()" placeholder="🔍 搜索玩家账号 ID 或 项目..."
+                class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                        <th class="p-3.5">日期</th>
+                        <th class="p-3.5">玩家账号 ID</th>
+                        <th class="p-3.5">购买项目</th>
+                        <th class="p-3.5">金额 (RM)</th>
+                        <th class="p-3.5 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="recordTableBody" class="divide-y divide-slate-100">
+                    <tr>
+                        <td colspan="5" class="p-6 text-center text-slate-400">正在同步云端记录...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ==========================================
+    // 1. Supabase 数据库连接配置
+    // ==========================================
+    const SUPABASE_URL = "https://qrhdaptikzkoeggoayxc.supabase.co";
+    // 请点击 Supabase 页面上那个“两个重叠小方块”图标复制完整 key，并粘贴到引号中：
+    const SUPABASE_ANON_KEY = "sb_publishable_xP02ZBHUCUC8qkIfm7cbcg_a327_gl_";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allRecords = [];
+    let trendChartInstance = null;
+    let productChartInstance = null;
+
+    // 页面载入时初始化
+    window.addEventListener('DOMContentLoaded', () => {
+        // 自动将日期设为今天 (本地时区)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('formDate').value = today;
+
+        fetchRecords();
+    });
+
+    // 从 Supabase 拉取所有充值数据
+    async function fetchRecords() {
+        try {
+            const { data, error } = await supabase
+                .from('recharge_records')
+                .select('*')
+                .order('record_date', { ascending: false })
+                .order('id', { ascending: false });
+
+            if (error) throw error;
+
+            allRecords = data || [];
+            updateDashboard(allRecords);
+            renderTable(allRecords);
+            updateCharts(allRecords);
+        } catch (err) {
+            console.error('获取记录失败:', err);
+            alert('获取云端数据失败，请检查 Publishable Key 是否完整填入！');
+        }
+    }
+
+    // 表单提交录入新记录
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '提交中...';
+
+        const record_date = document.getElementById('formDate').value;
+        const account_id = document.getElementById('formAccountId').value.trim();
+        const amount = parseFloat(document.getElementById('formAmount').value);
+        const product_type = document.getElementById('formProduct').value;
+
+        try {
+            const { error } = await supabase
+                .from('recharge_records')
+                .insert([{ record_date, account_id, amount, product_type }]);
+
+            if (error) throw error;
+
+            // 清空账号与金额输入，保留当前选定的日期与项目方便连续记账
+            document.getElementById('formAccountId').value = '';
+            document.getElementById('formAmount').value = '';
+            document.getElementById('formAccountId').focus();
+
+            // 重新拉取最新数据
+            await fetchRecords();
+        } catch (err) {
+            alert('保存失败: ' + err.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = '➕ 保存记录';
+        }
+    }
+
+    // 删除单笔记录
+    async function deleteRecord(id) {
+        if (!confirm('确定要删除这笔充值记录吗？')) return;
+
+        try {
+            const { error } = await supabase
+                .from('recharge_records')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+            await fetchRecords();
+        } catch (err) {
+            alert('删除失败: ' + err.message);
+        }
+    }
+
+    // 更新指标面板
+    function updateDashboard(records) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        let todaySum = 0;
+        let todayCount = 0;
+        let grandSum = 0;
+        const playerSet = new Set();
+
+        records.forEach(r => {
+            const amt = Number(r.amount);
+            grandSum += amt;
+            playerSet.add(r.account_id);
+
+            if (r.record_date === todayStr) {
+                todaySum += amt;
+                todayCount++;
+            }
+        });
+
+        document.getElementById('todayTotal').innerText = todaySum.toFixed(2);
+        document.getElementById('todayCount').innerText = `今日共 ${todayCount} 笔`;
+        document.getElementById('grandTotal').innerText = grandSum.toFixed(2);
+        document.getElementById('totalCount').innerText = `全周期共 ${records.length} 笔`;
+        document.getElementById('uniquePlayers').innerText = playerSet.size;
+    }
+
+    // 渲染表格
+    function renderTable(records) {
+        const tbody = document.getElementById('recordTableBody');
+        tbody.innerHTML = '';
+
+        if (records.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">暂无任何充值流水</td></tr>`;
+            return;
+        }
+
+        records.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
+
+            let tagColor = 'bg-slate-100 text-slate-700';
+            if (item.product_type === '元宝') tagColor = 'bg-amber-100 text-amber-800';
+            else if (item.product_type.includes('月卡')) tagColor = 'bg-purple-100 text-purple-800';
+            else if (item.product_type.includes('基金')) tagColor = 'bg-blue-100 text-blue-800';
+
+            tr.innerHTML = `
+                <td class="p-3.5 text-slate-500">${item.record_date}</td>
+                <td class="p-3.5 font-bold text-slate-800">${escapeHtml(item.account_id)}</td>
+                <td class="p-3.5">
+                    <span class="text-xs px-2 py-0.5 rounded font-medium ${tagColor}">
+                        ${escapeHtml(item.product_type)}
+                    </span>
+                </td>
+                <td class="p-3.5 font-bold text-indigo-700">RM ${Number(item.amount).toFixed(2)}</td>
+                <td class="p-3.5 text-right">
+                    <button onclick="deleteRecord(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline">删除</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 搜索过滤
+    function filterTable() {
+        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const filtered = allRecords.filter(r => 
+            r.account_id.toLowerCase().includes(query) || 
+            r.product_type.toLowerCase().includes(query) ||
+            r.record_date.includes(query)
+        );
+        renderTable(filtered);
+    }
+
+    // 更新图表 (Chart.js)
+    function updateCharts(records) {
+        // 1. 过去 7 天流水趋势
+        const last7Days = [];
+        const dayMap = {};
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const str = d.toISOString().split('T')[0];
+            last7Days.push(str);
+            dayMap[str] = 0;
+        }
+
+        // 2. 产品占比
+        const productMap = {};
+
+        records.forEach(r => {
+            if (dayMap[r.record_date] !== undefined) {
+                dayMap[r.record_date] += Number(r.amount);
+            }
+            productMap[r.product_type] = (productMap[r.product_type] || 0) + Number(r.amount);
+        });
+
+        // 绘制趋势柱状图
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+        trendChartInstance = new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: last7Days.map(d => d.slice(5)),
+                datasets: [{
+                    label: '充值金额 (RM)',
+                    data: last7Days.map(d => dayMap[d]),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 绘制产品占比饼图
+        const productCtx = document.getElementById('productChart').getContext('2d');
+        if (productChartInstance) productChartInstance.destroy();
+        const productLabels = Object.keys(productMap);
+        const productData = Object.values(productMap);
+
+        productChartInstance = new Chart(productCtx, {
+            type: 'doughnut',
+            data: {
+                labels: productLabels.length ? productLabels : ['暂无数据'],
+                datasets: [{
+                    data: productData.length ? productData : [1],
+                    backgroundColor: ['#f59e0b', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+                }
+            }
+        });
+    }
+
+    // 导出 CSV (Excel 可直接打开)
+    function exportToCSV() {
+        if (allRecords.length === 0) {
+            alert('当前没有任何记录可导出！');
+            return;
+        }
+
+        let csv = '\uFEFF';
+        csv += '充值日期,玩家账号ID,购买项目,充值金额(RM)\n';
+
+        allRecords.forEach(r => {
+            csv += `"${r.record_date}","${r.account_id}","${r.product_type}",${Number(r.amount).toFixed(2)}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `游戏充值对账流水_${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    function escapeHtml(text) {
+        return (text || '').replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[m]));
+    }
+</script>
+
+</body>
+</html>
