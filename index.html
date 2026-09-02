@@ -14,7 +14,7 @@
 
 <div class="max-w-6xl mx-auto space-y-6">
 
-    <!-- 顶部状态与功能切换栏 -->
+    <!-- 顶部状态栏与模块切换 -->
     <div class="bg-white p-5 rounded-xl shadow-sm space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -48,7 +48,7 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- PORTION 1: 充值流水部分 (组合打包对账版)                          -->
+    <!-- PORTION 1: 充值流水部分                                         -->
     <!-- ============================================================== -->
     <div id="portionBilling" class="space-y-6">
         <!-- 看板 -->
@@ -82,12 +82,12 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">玩家账号 / 游戏 ID</label>
-                        <input type="text" id="formAccountId" required placeholder="如: tycheng91"
+                        <input type="text" id="formAccountId" required placeholder="如: user_9981 或 角色名"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                 </div>
 
-                <!-- 组合项目勾选区 -->
+                <!-- 项目勾选与自定金额 -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                     <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">选择本次进账包含的项目：</span>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -108,7 +108,6 @@
                         </label>
                     </div>
 
-                    <!-- 元宝与其他自定金额 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">购买元宝金额 (RM)</label>
@@ -127,7 +126,6 @@
                     </div>
                 </div>
 
-                <!-- 自动计算总额与提交栏 -->
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
                     <div class="flex items-baseline gap-2">
                         <span class="text-sm text-slate-500">该笔转账总金额 (对账依据):</span>
@@ -153,11 +151,11 @@
             </div>
         </div>
 
-        <!-- 流水列表 -->
+        <!-- 明细列表 -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <h3 class="font-bold text-slate-800">📋 充值流水明细 (每行对应一笔转账)</h3>
-                <input type="text" id="searchInput" oninput="filterTable()" placeholder="🔍 搜索玩家账号 ID 或包含的项目..."
+                <h3 class="font-bold text-slate-800">📋 充值流水明细</h3>
+                <input type="text" id="searchInput" oninput="filterTable()" placeholder="🔍 搜索玩家账号 ID 或项目..."
                     class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             </div>
             <div class="overflow-x-auto">
@@ -217,7 +215,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">玩家角色名</label>
-                        <input type="text" id="giftPlayerName" required placeholder="如: 角色名"
+                        <input type="text" id="giftPlayerName" required placeholder="如: 独孤求败"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
                     </div>
                     <div>
@@ -311,7 +309,7 @@
                 <input type="text" id="editBillingAccountId" class="w-full p-2 border rounded-lg text-sm">
             </div>
             <div>
-                <label class="block mb-1">项目简述 (支持多个，如: 成长基金 + 至尊月卡 + 元宝:1000)</label>
+                <label class="block mb-1">项目简述 (多个项目以 + 隔开)</label>
                 <input type="text" id="editBillingProduct" class="w-full p-2 border rounded-lg text-sm font-semibold">
             </div>
             <div>
@@ -325,7 +323,7 @@
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
             <button type="button" onclick="closeEditBillingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium cursor-pointer">取消</button>
-            <button type="button" onclick="submitEditBilling()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
+            <button type="button" id="submitEditBillingBtn" onclick="submitEditBilling()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
         </div>
     </div>
 </div>
@@ -379,7 +377,7 @@
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
             <button type="button" onclick="closeEditGiftModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium cursor-pointer">取消</button>
-            <button type="button" onclick="submitEditGift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
+            <button type="button" id="submitEditGiftBtn" onclick="submitEditGift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
         </div>
     </div>
 </div>
@@ -443,7 +441,6 @@
         else loadGiftRecords();
     }
 
-    // 计算本次进账组合的总金额
     function calcTotalAmount() {
         let total = 0;
         if (document.getElementById('itemFund').checked) total += 50;
@@ -461,7 +458,7 @@
     }
 
     // ==============================================================
-    // 充值流水管理
+    // 充值模块
     // ==============================================================
     async function loadRecords() {
         const badge = document.getElementById('statusBadge');
@@ -490,16 +487,9 @@
         const account_id = document.getElementById('formAccountId').value.trim();
         const record_date = document.getElementById('formDate').value;
 
-        if (!account_id) {
-            alert('请填写玩家账号！');
-            return;
-        }
-        if (totalAmount <= 0) {
-            alert('请至少勾选或输入一个充值项目金额！');
-            return;
-        }
+        if (!account_id) return alert('请填写玩家账号！');
+        if (totalAmount <= 0) return alert('请至少勾选或输入一个充值项目金额！');
 
-        // 收集所有勾选和填写的项目
         const productList = [];
         if (document.getElementById('itemFund').checked) productList.push('成长基金(50)');
         if (document.getElementById('itemVipCard').checked) productList.push('至尊月卡(100)');
@@ -515,7 +505,6 @@
         }
 
         const product_type = productList.join(' + ');
-
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
         btn.innerText = '提交中...';
@@ -528,7 +517,6 @@
             });
             if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
 
-            // 重置表单
             document.getElementById('formAccountId').value = '';
             document.getElementById('itemFund').checked = false;
             document.getElementById('itemVipCard').checked = false;
@@ -579,19 +567,30 @@
             return;
         }
 
+        const btn = document.getElementById('submitEditBillingBtn');
+        btn.disabled = true;
+        btn.innerText = '正在保存...';
+
         try {
             const res = await fetch(`${SUPABASE_BASE}/recharge_records?id=eq.${id}`, {
                 method: "PATCH",
                 headers: reqHeaders,
                 body: JSON.stringify({ record_date, account_id, product_type, amount, note })
             });
-            if (!res.ok) throw new Error((await res.json()).message);
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || `HTTP ${res.status}`);
+            }
 
             closeEditBillingModal();
             await loadRecords();
-            alert('记录已修改！');
+            alert('充值记录已成功修改！');
         } catch (err) {
-            alert("修改失败: " + err.message);
+            alert("修改失败，数据库拦截: " + err.message + "\n\n提示：请确认是否已在 Supabase 运行更新权限 SQL！");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '保存修改';
         }
     }
 
@@ -640,7 +639,6 @@
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50 transition';
 
-            // 解析多个项目并渲染为精美标签
             const items = (item.product_type || '').split(' + ');
             let badgesHtml = '';
             items.forEach(p => {
@@ -692,14 +690,12 @@
         }
 
         const productMap = {};
-
         records.forEach(r => {
             if (dayMap[r.record_date] !== undefined) dayMap[r.record_date] += Number(r.amount);
 
-            // 拆解组合包里的各项，用于准确统计各类道具销量
             const items = (r.product_type || '').split(' + ');
             items.forEach(it => {
-                let name = it.replace(/\(\d+(\.\d+)?\)/, '').trim(); // 提取纯名称
+                let name = it.replace(/\(\d+(\.\d+)?\)/, '').trim();
                 let amt = 0;
                 const match = it.match(/\((\d+(\.\d+)?)\)/);
                 if (match) amt = parseFloat(match[1]);
@@ -741,7 +737,7 @@
     }
 
     // ==============================================================
-    // 开荒礼包管理
+    // 礼包模块
     // ==============================================================
     async function loadGiftRecords() {
         try {
@@ -855,10 +851,11 @@
         const gift_name = document.getElementById('editGiftName').value;
         const note = document.getElementById('editGiftNote').value.trim();
 
-        if (!account_id || !player_name) {
-            alert('请完整填写账号与角色名！');
-            return;
-        }
+        if (!account_id || !player_name) return alert('请完整填写账号与角色名！');
+
+        const btn = document.getElementById('submitEditGiftBtn');
+        btn.disabled = true;
+        btn.innerText = '正在保存...';
 
         try {
             const res = await fetch(`${SUPABASE_BASE}/gift_records?id=eq.${id}`, {
@@ -867,13 +864,19 @@
                 body: JSON.stringify({ gift_date, account_id, player_name, platform, social_name, gift_name, note })
             });
 
-            if (!res.ok) throw new Error((await res.json()).message);
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || `HTTP ${res.status}`);
+            }
 
             closeEditGiftModal();
             await loadGiftRecords();
             alert('礼包记录已成功修改！');
         } catch (err) {
-            alert("修改失败: " + err.message);
+            alert("修改失败，数据库拦截: " + err.message + "\n\n提示：请确认是否已在 Supabase 运行更新权限 SQL！");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = '保存修改';
         }
     }
 
