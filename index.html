@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>游戏充值管理系统 (云端协同版)</title>
-    <!-- 引入样式与脚本 -->
+    <title>游戏充值管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
@@ -16,26 +14,26 @@
 
 <div class="max-w-6xl mx-auto space-y-6">
 
-    <!-- 顶部标题栏 -->
+    <!-- 顶部状态栏 -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-5 rounded-xl shadow-sm gap-4">
         <div>
             <h1 class="text-2xl font-bold text-indigo-900 flex items-center gap-2">
                 🎮 玩家充值流水记账
                 <span id="statusBadge" class="text-xs bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full font-semibold">连接中...</span>
             </h1>
-            <p class="text-xs text-slate-500 mt-1">数据实时储存于 Supabase，多人打开网页可实时协同对账</p>
+            <p class="text-xs text-slate-500 mt-1">数据实时储存于云端数据库，多人打开网页可实时协同对账</p>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="fetchRecords()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition">
+            <button type="button" onclick="loadRecords()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition cursor-pointer">
                 🔄 刷新数据
             </button>
-            <button onclick="exportToCSV()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+            <button type="button" onclick="exportToCSV()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition cursor-pointer">
                 📥 导出 Excel (CSV)
             </button>
         </div>
     </div>
 
-    <!-- 数据指标看板 -->
+    <!-- 数据看板 -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-5 rounded-xl shadow-sm">
             <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日总充值</div>
@@ -54,38 +52,32 @@
         </div>
     </div>
 
-    <!-- 极速录入表单 -->
+    <!-- 录入表单 -->
     <div class="bg-white p-5 rounded-xl shadow-sm">
-        <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-1.5">
-            ✏️ 新增玩家充值记录
-        </h2>
-        <form id="recordForm" onsubmit="handleFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
-            <!-- 日期：默认当天，允许随意点击日历挑选前几天补录 -->
+        <h2 class="text-base font-bold text-slate-800 mb-4">✏️ 新增玩家充值记录</h2>
+        <form id="recordForm" onsubmit="saveRecord(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">充值日期 (可自选补录)</label>
                 <input type="date" id="formDate" required
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white cursor-pointer">
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
-            <!-- 玩家账号 ID -->
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">玩家账号 / 游戏 ID</label>
                 <input type="text" id="formAccountId" required placeholder="如: user_9981 或 角色名"
                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
-            <!-- 充值金额 -->
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">充值金额 (RM)</label>
                 <input type="number" step="0.01" id="formAmount" required placeholder="0.00"
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold text-indigo-700">
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
             </div>
 
-            <!-- 充值项目 -->
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">购买项目</label>
                 <select id="formProduct" required
-                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white">
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     <option value="元宝">元宝</option>
                     <option value="至尊月卡">至尊月卡</option>
                     <option value="江湖月卡">江湖月卡</option>
@@ -95,7 +87,6 @@
                 </select>
             </div>
 
-            <!-- 提交按钮 -->
             <div class="flex flex-col justify-end">
                 <button type="submit" id="submitBtn"
                     class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition cursor-pointer">
@@ -105,23 +96,19 @@
         </form>
     </div>
 
-    <!-- 统计图表区域 -->
+    <!-- 图表 -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="bg-white p-5 rounded-xl shadow-sm">
             <h3 class="text-sm font-bold text-slate-700 mb-2">📊 近 7 天流水趋势 (RM)</h3>
-            <div class="h-56">
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="h-56"><canvas id="trendChart"></canvas></div>
         </div>
         <div class="bg-white p-5 rounded-xl shadow-sm">
             <h3 class="text-sm font-bold text-slate-700 mb-2">🍰 充值项目占比统计</h3>
-            <div class="h-56 flex items-center justify-center">
-                <canvas id="productChart"></canvas>
-            </div>
+            <div class="h-56 flex items-center justify-center"><canvas id="productChart"></canvas></div>
         </div>
     </div>
 
-    <!-- 流水明细列表 -->
+    <!-- 流水列表 -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
             <h3 class="font-bold text-slate-800">📋 充值流水明细</h3>
@@ -132,7 +119,7 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-sm">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                    <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase">
                         <th class="p-3.5">日期</th>
                         <th class="p-3.5">玩家账号 ID</th>
                         <th class="p-3.5">购买项目</th>
@@ -141,9 +128,7 @@
                     </tr>
                 </thead>
                 <tbody id="recordTableBody" class="divide-y divide-slate-100">
-                    <tr>
-                        <td colspan="5" class="p-6 text-center text-slate-400">正在连接云端数据库...</td>
-                    </tr>
+                    <tr><td colspan="5" class="p-6 text-center text-slate-400">正在同步云端记录...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -152,150 +137,146 @@
 </div>
 
 <script>
-    // 默认自动填入本地当前系统日期
-    function setDefaultDate() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const dateInput = document.getElementById('formDate');
-        if (dateInput) {
-            dateInput.value = `${year}-${month}-${day}`;
-        }
+    // 1. 设置默认当天日期
+    function initDate() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        document.getElementById('formDate').value = `${y}-${m}-${day}`;
     }
-    setDefaultDate();
+    initDate();
 
-    // ==========================================
-    // 1. Supabase 数据库直连配置 (已内置填好)
-    // ==========================================
-    const SUPABASE_URL = "https://qrhdaptikzkoeggoayxc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGRhcHRpa3prb2VnZ29heXhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDk3OTUsImV4cCI6MjEwMzkyNTc5NX0.mtzWrY2AV-CSevh94yXcdbUwl5paKj_ashvflMmAbGY";
+    // 2. Supabase 直连配置 (原生 REST API，免 SDK)
+    const BASE_URL = "https://qrhdaptikzkoeggoayxc.supabase.co/rest/v1/recharge_records";
+    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFyaGRhcHRpa3prb2VnZ29heXhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNDk3OTUsImV4cCI6MjEwMzkyNTc5NX0.mtzWrY2AV-CSevh94yXcdbUwl5paKj_ashvflMmAbGY";
 
-    let supabase = null;
-    try {
-        if (window.supabase && window.supabase.createClient) {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        } else {
-            alert("Supabase SDK 加载受限，请刷新页面重试。");
-        }
-    } catch (e) {
-        alert("初始化数据库连接出错: " + e.message);
-    }
+    const reqHeaders = {
+        "apikey": API_KEY,
+        "Authorization": "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    };
 
     let allRecords = [];
     let trendChartInstance = null;
     let productChartInstance = null;
 
-    window.onload = function() {
-        if (supabase) {
-            fetchRecords();
-        }
-    };
-
-    // 从 Supabase 获取所有充值流水
-    async function fetchRecords() {
-        if (!supabase) return;
-        const statusBadge = document.getElementById('statusBadge');
+    // 3. 读取记录
+    async function loadRecords() {
+        const badge = document.getElementById('statusBadge');
         try {
-            const { data, error } = await supabase
-                .from('recharge_records')
-                .select('*')
-                .order('record_date', { ascending: false })
-                .order('id', { ascending: false });
+            const res = await fetch(`${BASE_URL}?select=*&order=record_date.desc,id.desc`, {
+                headers: reqHeaders
+            });
 
-            if (error) throw error;
-
-            allRecords = data || [];
-            if (statusBadge) {
-                statusBadge.className = "text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full font-semibold";
-                statusBadge.innerText = "云端已同步";
+            if (!res.ok) {
+                const errJson = await res.json();
+                throw new Error(errJson.message || `HTTP ${res.status}`);
             }
 
-            updateDashboard(allRecords);
+            allRecords = await res.json();
+
+            if (badge) {
+                badge.innerText = "云端已同步";
+                badge.className = "text-xs bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full font-semibold";
+            }
+
+            renderDashboard(allRecords);
             renderTable(allRecords);
-            updateCharts(allRecords);
+            renderCharts(allRecords);
         } catch (err) {
-            console.error('获取记录失败:', err);
-            if (statusBadge) {
-                statusBadge.className = "text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-semibold";
-                statusBadge.innerText = "同步失败";
+            console.error("加载失败:", err);
+            if (badge) {
+                badge.innerText = "连接失败";
+                badge.className = "text-xs bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full font-semibold";
             }
-            alert('获取记录失败: ' + err.message);
+            alert("读取云端数据失败: " + err.message);
         }
     }
 
-    // 录入新流水
-    async function handleFormSubmit(e) {
+    // 4. 保存新记录
+    async function saveRecord(e) {
         e.preventDefault();
-        if (!supabase) {
-            alert('数据库未连接成功');
-            return;
-        }
 
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        submitBtn.innerText = '提交中...';
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerText = '提交中...';
 
         const record_date = document.getElementById('formDate').value;
         const account_id = document.getElementById('formAccountId').value.trim();
         const amount = parseFloat(document.getElementById('formAmount').value);
         const product_type = document.getElementById('formProduct').value;
 
+        if (!account_id || isNaN(amount) || amount <= 0) {
+            alert('请完整填写账号 ID 与正确的金额！');
+            btn.disabled = false;
+            btn.innerText = '➕ 保存记录';
+            return;
+        }
+
         try {
-            const { error } = await supabase
-                .from('recharge_records')
-                .insert([{ record_date, account_id, amount, product_type }]);
+            const res = await fetch(BASE_URL, {
+                method: "POST",
+                headers: reqHeaders,
+                body: JSON.stringify([{ record_date, account_id, amount, product_type }])
+            });
 
-            if (error) throw error;
+            if (!res.ok) {
+                const errJson = await res.json();
+                throw new Error(errJson.message || `HTTP ${res.status}`);
+            }
 
-            // 清空账号和金额，保留当前选定的日期方便连续录入
             document.getElementById('formAccountId').value = '';
             document.getElementById('formAmount').value = '';
             document.getElementById('formAccountId').focus();
 
-            await fetchRecords();
+            await loadRecords();
         } catch (err) {
-            alert('保存失败: ' + err.message);
+            alert("保存失败: " + err.message);
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = '➕ 保存记录';
+            btn.disabled = false;
+            btn.innerText = '➕ 保存记录';
         }
     }
 
-    // 删除单笔流水
-    async function deleteRecord(id) {
-        if (!confirm('确定要删除这笔充值记录吗？')) return;
+    // 5. 删除记录
+    async function deleteItem(id) {
+        if (!confirm('确定要删除此笔流水吗？')) return;
 
         try {
-            const { error } = await supabase
-                .from('recharge_records')
-                .delete()
-                .eq('id', id);
+            const res = await fetch(`${BASE_URL}?id=eq.${id}`, {
+                method: "DELETE",
+                headers: reqHeaders
+            });
 
-            if (error) throw error;
-            await fetchRecords();
+            if (!res.ok) {
+                const errJson = await res.json();
+                throw new Error(errJson.message || `HTTP ${res.status}`);
+            }
+
+            await loadRecords();
         } catch (err) {
-            alert('删除失败: ' + err.message);
+            alert("删除失败: " + err.message);
         }
     }
 
-    // 更新看板
-    function updateDashboard(records) {
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        
+    // 6. 统计看板
+    function renderDashboard(records) {
+        const d = new Date();
+        const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
         let todaySum = 0;
         let todayCount = 0;
         let grandSum = 0;
         const playerSet = new Set();
 
         records.forEach(r => {
-            const amt = Number(r.amount);
-            grandSum += amt;
+            const val = Number(r.amount);
+            grandSum += val;
             playerSet.add(r.account_id);
-
-            if (r.record_date === todayStr) {
-                todaySum += amt;
+            if (r.record_date === today) {
+                todaySum += val;
                 todayCount++;
             }
         });
@@ -307,13 +288,13 @@
         document.getElementById('uniquePlayers').innerText = playerSet.size;
     }
 
-    // 渲染表格
+    // 7. 表格渲染
     function renderTable(records) {
         const tbody = document.getElementById('recordTableBody');
         tbody.innerHTML = '';
 
         if (records.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">暂无任何充值记录，请在上方录入！</td></tr>`;
+            tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-400">暂无任何流水记录，请在上方录入！</td></tr>';
             return;
         }
 
@@ -329,33 +310,29 @@
             tr.innerHTML = `
                 <td class="p-3.5 text-slate-500 font-mono text-xs">${item.record_date}</td>
                 <td class="p-3.5 font-bold text-slate-800">${escapeHtml(item.account_id)}</td>
-                <td class="p-3.5">
-                    <span class="text-xs px-2.5 py-0.5 rounded font-medium ${tagColor}">
-                        ${escapeHtml(item.product_type)}
-                    </span>
-                </td>
+                <td class="p-3.5"><span class="text-xs px-2.5 py-0.5 rounded font-medium ${tagColor}">${escapeHtml(item.product_type)}</span></td>
                 <td class="p-3.5 font-bold text-indigo-700">RM ${Number(item.amount).toFixed(2)}</td>
                 <td class="p-3.5 text-right">
-                    <button onclick="deleteRecord(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline">删除</button>
+                    <button type="button" onclick="deleteItem(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">删除</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // 搜索过滤
+    // 8. 搜索
     function filterTable() {
-        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
         const filtered = allRecords.filter(r => 
-            (r.account_id || '').toLowerCase().includes(query) || 
-            (r.product_type || '').toLowerCase().includes(query) ||
-            (r.record_date || '').includes(query)
+            (r.account_id || '').toLowerCase().includes(q) || 
+            (r.product_type || '').toLowerCase().includes(q) ||
+            (r.record_date || '').includes(q)
         );
         renderTable(filtered);
     }
 
-    // 图表更新
-    function updateCharts(records) {
+    // 9. 图表渲染
+    function renderCharts(records) {
         if (!window.Chart) return;
 
         const last7Days = [];
@@ -369,90 +346,69 @@
         }
 
         const productMap = {};
-
         records.forEach(r => {
-            if (dayMap[r.record_date] !== undefined) {
-                dayMap[r.record_date] += Number(r.amount);
-            }
+            if (dayMap[r.record_date] !== undefined) dayMap[r.record_date] += Number(r.amount);
             productMap[r.product_type] = (productMap[r.product_type] || 0) + Number(r.amount);
         });
 
-        // 柱状图
-        const trendEl = document.getElementById('trendChart');
-        if (trendEl) {
-            const trendCtx = trendEl.getContext('2d');
-            if (trendChartInstance) trendChartInstance.destroy();
-            trendChartInstance = new Chart(trendCtx, {
-                type: 'bar',
-                data: {
-                    labels: last7Days.map(d => d.slice(5)),
-                    datasets: [{
-                        label: '充值金额 (RM)',
-                        data: last7Days.map(d => dayMap[d]),
-                        backgroundColor: '#6366f1',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        if (trendChartInstance) trendChartInstance.destroy();
+        trendChartInstance = new Chart(trendCtx, {
+            type: 'bar',
+            data: {
+                labels: last7Days.map(d => d.slice(5)),
+                datasets: [{
+                    label: '充值金额 (RM)',
+                    data: last7Days.map(d => dayMap[d]),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
 
-        // 饼图
-        const prodEl = document.getElementById('productChart');
-        if (prodEl) {
-            const productCtx = prodEl.getContext('2d');
-            if (productChartInstance) productChartInstance.destroy();
-            const productLabels = Object.keys(productMap);
-            const productData = Object.values(productMap);
+        const prodCtx = document.getElementById('productChart').getContext('2d');
+        if (productChartInstance) productChartInstance.destroy();
+        const pKeys = Object.keys(productMap);
+        const pValues = Object.values(productMap);
 
-            productChartInstance = new Chart(productCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: productLabels.length ? productLabels : ['暂无数据'],
-                    datasets: [{
-                        data: productData.length ? productData : [1],
-                        backgroundColor: ['#f59e0b', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#64748b']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
-                    }
-                }
-            });
-        }
+        productChartInstance = new Chart(prodCtx, {
+            type: 'doughnut',
+            data: {
+                labels: pKeys.length ? pKeys : ['暂无数据'],
+                datasets: [{
+                    data: pValues.length ? pValues : [1],
+                    backgroundColor: ['#f59e0b', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899', '#64748b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
     }
 
-    // 导出 Excel (CSV)
+    // 10. 导出 CSV
     function exportToCSV() {
         if (allRecords.length === 0) {
-            alert('暂无充值流水可导出！');
+            alert('暂无流水可导出');
             return;
         }
-
-        let csv = '\uFEFF';
-        csv += '充值日期,玩家账号ID,购买项目,充值金额(RM)\n';
-
+        let csv = '\uFEFF充值日期,玩家账号ID,购买项目,充值金额(RM)\n';
         allRecords.forEach(r => {
             csv += `"${r.record_date}","${r.account_id}","${r.product_type}",${Number(r.amount).toFixed(2)}\n`;
         });
-
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        const now = new Date();
-        const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        link.download = `游戏充值流水对账_${dateStr}.csv`;
+        const d = new Date();
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        link.download = `充值对账流水_${dateStr}.csv`;
         link.click();
     }
 
@@ -461,6 +417,9 @@
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
         }[m]));
     }
+
+    // 立即执行加载
+    loadRecords();
 </script>
 
 </body>
