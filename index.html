@@ -10,15 +10,15 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 p-4 md:p-8">
+<body class="bg-slate-100 text-slate-800 p-3 sm:p-6 md:p-8">
 
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-6xl mx-auto space-y-4 sm:space-y-6">
 
     <!-- 顶部状态栏与模块切换 -->
-    <div class="bg-white p-5 rounded-xl shadow-sm space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm space-y-3 sm:space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-2xl font-bold text-indigo-900 flex items-center gap-2">
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-900 flex items-center gap-2 flex-wrap">
                     ⚔️ 游戏运营协同管理
                     <span id="statusBadge" class="text-xs bg-amber-100 text-amber-700 px-2.5 py-0.5 rounded-full font-semibold">连接中...</span>
                     <span id="roleBadge" class="text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium">协同录入</span>
@@ -26,28 +26,27 @@
                 <p class="text-xs text-slate-500 mt-1">云端协同记账系统，多终端数据实时同步</p>
             </div>
             <div class="flex items-center gap-2">
-                <!-- 低调的管理模式按键 -->
-                <button type="button" id="adminToggleBtn" onclick="toggleAdminAuth()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5">
+                <button type="button" id="adminToggleBtn" onclick="toggleAdminAuth()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5">
                     ⚙️ 管理模式
                 </button>
-                <button type="button" onclick="refreshCurrentTab()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition cursor-pointer">
+                <button type="button" onclick="refreshCurrentTab()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition cursor-pointer">
                     🔄 刷新
                 </button>
-                <button type="button" id="exportBtn" onclick="exportCurrentCSV()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition cursor-pointer">
+                <button type="button" id="exportBtn" onclick="exportCurrentCSV()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-lg transition cursor-pointer">
                     📥 导出 CSV
                 </button>
             </div>
         </div>
 
         <!-- 标签页切换 -->
-        <div class="flex border-b border-slate-200 gap-2 pt-2">
+        <div class="flex border-b border-slate-200 gap-2 pt-1">
             <button id="tabBillingBtn" type="button" onclick="switchPortion('billing')"
-                class="px-5 py-2.5 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
-                🎮 玩家充值流水账目
+                class="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
+                🎮 充值流水
             </button>
             <button id="tabGiftBtn" type="button" onclick="switchPortion('gift')"
-                class="px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
-                🎁 开荒礼包发放记录
+                class="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer">
+                🎁 开荒礼包发放
             </button>
         </div>
     </div>
@@ -55,31 +54,42 @@
     <!-- ============================================================== -->
     <!-- PORTION 1: 充值流水部分                                         -->
     <!-- ============================================================== -->
-    <div id="portionBilling" class="space-y-6">
+    <div id="portionBilling" class="space-y-4 sm:space-y-6">
         <!-- 看板 (仅管理员可见) -->
-        <div id="adminBillingDashboard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-5 rounded-xl shadow-sm">
+        <div id="adminBillingDashboard" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日总充值</div>
                 <div class="text-2xl font-extrabold mt-1">RM <span id="todayTotal">0.00</span></div>
                 <div class="text-xs mt-1 opacity-90" id="todayCount">今日共 0 笔</div>
             </div>
-            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="bg-gradient-to-br from-purple-500 to-purple-700 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">累计总流水</div>
                 <div class="text-2xl font-extrabold mt-1">RM <span id="grandTotal">0.00</span></div>
                 <div class="text-xs mt-1 opacity-90" id="totalCount">全周期共 0 笔</div>
             </div>
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="bg-gradient-to-br from-emerald-500 to-teal-700 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">付费玩家数 (去重)</div>
                 <div class="text-2xl font-extrabold mt-1"><span id="uniquePlayers">0</span> 位</div>
                 <div class="text-xs mt-1 opacity-90">活跃充值账号</div>
             </div>
         </div>
 
-        <!-- 录入组合表单 (所有人可见) -->
-        <div class="bg-white p-5 rounded-xl shadow-sm space-y-4">
-            <h2 class="text-base font-bold text-slate-800">✏️ 录入玩家充值流水 (可单笔合并多个项目)</h2>
+        <!-- 录入成功核对提示条 (帮助客服核对刚刚录入的内容) -->
+        <div id="recentSubmitBanner" class="hidden p-4 bg-emerald-50 border border-emerald-300 rounded-xl space-y-1">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
+                    ✅ 刚录入成功！请核对以下单据内容：
+                </span>
+                <button type="button" onclick="document.getElementById('recentSubmitBanner').classList.add('hidden')" class="text-xs text-emerald-600 hover:text-emerald-900 font-bold">关闭 ✕</button>
+            </div>
+            <div id="recentSubmitDetails" class="text-xs text-emerald-900 leading-relaxed font-mono pt-1"></div>
+        </div>
+
+        <!-- 录入组合表单 -->
+        <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm space-y-4">
+            <h2 class="text-sm sm:text-base font-bold text-slate-800">✏️ 录入玩家充值流水 (可单笔合并多个项目)</h2>
             <form id="recordForm" onsubmit="saveRecord(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">充值日期</label>
                         <input type="date" id="formDate" required
@@ -101,27 +111,27 @@
                 </div>
 
                 <!-- 组合勾选区 -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 space-y-3">
                     <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">选择本次进账包含的项目：</span>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <label class="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
+                        <label class="flex items-center gap-2 p-2.5 sm:p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
                             <input type="checkbox" id="itemFund" onchange="calcTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
-                            <span class="text-sm font-semibold text-slate-700">成长基金</span>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-700">成长基金</span>
                             <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
                         </label>
-                        <label class="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                        <label class="flex items-center gap-2 p-2.5 sm:p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
                             <input type="checkbox" id="itemVipCard" onchange="calcTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
-                            <span class="text-sm font-semibold text-slate-700">至尊月卡</span>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-700">至尊月卡</span>
                             <span class="text-xs text-indigo-600 font-bold ml-auto">RM 100</span>
                         </label>
-                        <label class="flex items-center gap-2 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                        <label class="flex items-center gap-2 p-2.5 sm:p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
                             <input type="checkbox" id="itemNormalCard" onchange="calcTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
-                            <span class="text-sm font-semibold text-slate-700">江湖月卡</span>
+                            <span class="text-xs sm:text-sm font-semibold text-slate-700">江湖月卡</span>
                             <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
                         </label>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">购买元宝金额 (RM)</label>
                             <input type="number" step="0.01" id="itemYuanbao" oninput="calcTotalAmount()" placeholder="如无则留空，或填 1000"
@@ -145,10 +155,10 @@
                         class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                 </div>
 
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-sm text-slate-500">该笔转账总金额:</span>
-                        <span class="text-2xl font-black text-indigo-700 font-mono">RM <span id="displayTotal">0.00</span></span>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                    <div class="flex items-baseline gap-2 w-full sm:w-auto justify-between sm:justify-start">
+                        <span class="text-xs sm:text-sm text-slate-500">该笔转账总金额:</span>
+                        <span class="text-xl sm:text-2xl font-black text-indigo-700 font-mono">RM <span id="displayTotal">0.00</span></span>
                     </div>
                     <button type="submit" id="submitBtn"
                         class="w-full sm:w-56 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg text-sm shadow transition cursor-pointer">
@@ -158,26 +168,43 @@
             </form>
         </div>
 
+        <!-- 客服会话临时历史 (仅本次开着网页时可见，刷新/重开立刻清空消失) -->
+        <div id="sessionHistoryArea" class="bg-white p-4 sm:p-5 rounded-xl shadow-sm space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    📝 本次录入临时核对列表
+                    <span class="text-xs font-normal text-slate-400">(网页刷新或重开自动清除)</span>
+                </h3>
+                <span id="sessionCountBadge" class="text-xs bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded">0 笔</span>
+            </div>
+            
+            <div id="sessionHistoryList" class="space-y-2">
+                <div class="text-center py-5 text-xs text-slate-400">本次尚未录入数据</div>
+            </div>
+        </div>
+
         <!-- 统计图表 (仅管理员可见) -->
         <div id="adminBillingCharts" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white p-5 rounded-xl shadow-sm">
+            <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <h3 class="text-sm font-bold text-slate-700 mb-2">📊 近 7 天流水趋势 (RM)</h3>
                 <div class="h-56"><canvas id="trendChart"></canvas></div>
             </div>
-            <div class="bg-white p-5 rounded-xl shadow-sm">
+            <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <h3 class="text-sm font-bold text-slate-700 mb-2">🍰 道具细项销量占比</h3>
                 <div class="h-56 flex items-center justify-center"><canvas id="productChart"></canvas></div>
             </div>
         </div>
 
-        <!-- 明细列表 (仅管理员可见) -->
+        <!-- 充值明细列表 (仅管理员可见) -->
         <div id="adminBillingTableArea" class="hidden bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <h3 class="font-bold text-slate-800">📋 充值流水明细 (管理员视图)</h3>
+                <h3 class="font-bold text-slate-800 text-sm sm:text-base">📋 充值流水明细 (管理员全量视图)</h3>
                 <input type="text" id="searchInput" oninput="filterTable()" placeholder="🔍 搜索玩家账号 ID、渠道或项目..."
                     class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-indigo-500">
             </div>
-            <div class="overflow-x-auto">
+
+            <!-- 电脑端：标准表格显示 -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase">
@@ -194,10 +221,12 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- 手机端：自适应横向卡片流显示 -->
+            <div id="recordMobileCards" class="block md:hidden divide-y divide-slate-100 p-2 space-y-2"></div>
         </div>
 
-        <!-- 常规中性提示框 (非管理模式时展示) -->
-        <div id="staffBillingTip" class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
+        <div id="staffBillingTip" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
             💡 录入完成后数据将自动上传云端同步，可在多设备协同操作。
         </div>
     </div>
@@ -205,29 +234,29 @@
     <!-- ============================================================== -->
     <!-- PORTION 2: 开荒礼包独立部分                                     -->
     <!-- ============================================================== -->
-    <div id="portionGift" class="space-y-6 hidden">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-gradient-to-br from-amber-500 to-amber-700 text-white p-5 rounded-xl shadow-sm">
+    <div id="portionGift" class="space-y-4 sm:space-y-6 hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div class="bg-gradient-to-br from-amber-500 to-amber-700 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">累计已发礼包</div>
                 <div class="text-2xl font-extrabold mt-1"><span id="giftTotalCount">0</span> 份</div>
                 <div class="text-xs mt-1 opacity-90">全量发放总数</div>
             </div>
-            <div class="bg-gradient-to-br from-rose-500 to-rose-700 text-white p-5 rounded-xl shadow-sm">
+            <div class="bg-gradient-to-br from-rose-500 to-rose-700 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">今日发放礼包</div>
                 <div class="text-2xl font-extrabold mt-1"><span id="giftTodayCount">0</span> 份</div>
                 <div class="text-xs mt-1 opacity-90">今日发放统计</div>
             </div>
-            <div class="bg-gradient-to-br from-cyan-600 to-blue-800 text-white p-5 rounded-xl shadow-sm">
+            <div class="bg-gradient-to-br from-cyan-600 to-blue-800 text-white p-4 sm:p-5 rounded-xl shadow-sm">
                 <div class="text-xs opacity-80 uppercase tracking-wider font-semibold">防重复检测引擎</div>
                 <div class="text-2xl font-extrabold mt-1">实时拦截中</div>
                 <div class="text-xs mt-1 opacity-90">重复账号自动警报</div>
             </div>
         </div>
 
-        <div class="bg-white p-5 rounded-xl shadow-sm">
-            <h2 class="text-base font-bold text-slate-800 mb-4">🎁 登记发放开荒礼包</h2>
+        <div class="bg-white p-4 sm:p-5 rounded-xl shadow-sm">
+            <h2 class="text-sm sm:text-base font-bold text-slate-800 mb-4">🎁 登记发放开荒礼包</h2>
             <form id="giftForm" onsubmit="saveGift(event)" class="space-y-3.5">
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">发放日期</label>
                         <input type="date" id="giftDate" required
@@ -258,7 +287,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">礼包类型</label>
                         <select id="giftName" required
@@ -290,13 +319,16 @@
             </form>
         </div>
 
+        <!-- 礼包清单列表 -->
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <h3 class="font-bold text-slate-800">📋 开荒礼包已发放清单</h3>
+                <h3 class="font-bold text-slate-800 text-sm sm:text-base">📋 开荒礼包已发放清单</h3>
                 <input type="text" id="giftSearchInput" oninput="filterGiftTable()" placeholder="🔍 搜索账号 ID、微信/FB 或礼包..."
                     class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-amber-500">
             </div>
-            <div class="overflow-x-auto">
+
+            <!-- 电脑端：标准表格 -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase">
@@ -314,18 +346,21 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- 手机端：自适应横向卡片流显示 -->
+            <div id="giftMobileCards" class="block md:hidden divide-y divide-slate-100 p-2 space-y-2"></div>
         </div>
     </div>
 
 </div>
 
 <!-- 充值流水修改弹窗 -->
-<div id="editBillingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+<div id="editBillingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-xl w-full p-5 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <h3 class="text-base font-bold text-slate-800 border-b pb-2">✏️ 修改充值记录</h3>
         <input type="hidden" id="editBillingId">
         
-        <div class="space-y-4 text-xs font-semibold text-slate-600">
+        <div class="space-y-3 sm:space-y-4 text-xs font-semibold text-slate-600">
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                     <label class="block mb-1">充值日期</label>
@@ -344,39 +379,39 @@
                 </div>
             </div>
 
-            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2.5">
                 <span class="text-xs font-bold text-slate-700">点击调整包含的项目：</span>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <label class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer">
                         <input type="checkbox" id="editItemFund" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
                         <span class="text-xs font-semibold text-slate-700">成长基金</span>
                         <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                    <label class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer">
                         <input type="checkbox" id="editItemVipCard" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
                         <span class="text-xs font-semibold text-slate-700">至尊月卡</span>
                         <span class="text-xs text-indigo-600 font-bold ml-auto">RM 100</span>
                     </label>
-                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                    <label class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-lg cursor-pointer">
                         <input type="checkbox" id="editItemNormalCard" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
                         <span class="text-xs font-semibold text-slate-700">江湖月卡</span>
                         <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
                     </label>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">购买元宝金额 (RM)</label>
-                        <input type="number" step="0.01" id="editItemYuanbao" oninput="calcEditTotalAmount()" placeholder="输入金额，无则留空"
-                            class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <input type="number" step="0.01" id="editItemYuanbao" oninput="calcEditTotalAmount()" placeholder="输入金额"
+                            class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">其他定制道具 (RM / 备注)</label>
                         <div class="flex gap-1.5">
                             <input type="number" step="0.01" id="editItemOtherAmount" oninput="calcEditTotalAmount()" placeholder="金额"
-                                class="w-1/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                class="w-1/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none">
                             <input type="text" id="editItemOtherNote" placeholder="道具/礼包备注"
-                                class="w-2/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                class="w-2/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none">
                         </div>
                     </div>
                 </div>
@@ -384,7 +419,7 @@
 
             <div class="flex items-center justify-between p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
                 <span class="text-xs text-slate-600 font-medium">调整后总金额:</span>
-                <span class="text-xl font-black text-indigo-700 font-mono">RM <span id="editDisplayTotal">0.00</span></span>
+                <span class="text-lg sm:text-xl font-black text-indigo-700 font-mono">RM <span id="editDisplayTotal">0.00</span></span>
             </div>
 
             <div>
@@ -394,15 +429,15 @@
         </div>
 
         <div class="flex justify-end gap-2 pt-3 border-t">
-            <button type="button" onclick="closeEditBillingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium cursor-pointer">取消</button>
-            <button type="button" id="submitEditBillingBtn" onclick="submitEditBilling()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
+            <button type="button" onclick="closeEditBillingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs sm:text-sm font-medium cursor-pointer">取消</button>
+            <button type="button" id="submitEditBillingBtn" onclick="submitEditBilling()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-semibold cursor-pointer">保存修改</button>
         </div>
     </div>
 </div>
 
 <!-- 礼包修改弹窗 -->
-<div id="editGiftModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+<div id="editGiftModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-5 sm:p-6 space-y-4">
         <h3 class="text-base font-bold text-slate-800 border-b pb-2">✏️ 修改礼包发放记录</h3>
         <input type="hidden" id="editGiftId">
         <div class="space-y-3 text-xs font-semibold text-slate-600">
@@ -448,8 +483,8 @@
             </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t">
-            <button type="button" onclick="closeEditGiftModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium cursor-pointer">取消</button>
-            <button type="button" id="submitEditGiftBtn" onclick="submitEditGift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
+            <button type="button" onclick="closeEditGiftModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs sm:text-sm font-medium cursor-pointer">取消</button>
+            <button type="button" id="submitEditGiftBtn" onclick="submitEditGift()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs sm:text-sm font-semibold cursor-pointer">保存修改</button>
         </div>
     </div>
 </div>
@@ -471,6 +506,7 @@
     let isAdmin = localStorage.getItem('game_admin_auth') === 'true';
     let allBillingRecords = [];
     let allGiftRecords = [];
+    let sessionBillingRecords = []; // 伙伴端仅在本次开着网页时保存在内存中，刷新自动清空
     let trendChartInstance = null;
     let productChartInstance = null;
 
@@ -517,6 +553,7 @@
         const adminDashboard = document.getElementById('adminBillingDashboard');
         const adminCharts = document.getElementById('adminBillingCharts');
         const adminTableArea = document.getElementById('adminBillingTableArea');
+        const sessionArea = document.getElementById('sessionHistoryArea');
         const staffTip = document.getElementById('staffBillingTip');
         const toggleBtn = document.getElementById('adminToggleBtn');
         const roleBadge = document.getElementById('roleBadge');
@@ -526,22 +563,24 @@
             adminDashboard.classList.remove('hidden');
             adminCharts.classList.remove('hidden');
             adminTableArea.classList.remove('hidden');
+            sessionArea.classList.add('hidden'); // 管理员直接看全量，无需临时列表
             staffTip.classList.add('hidden');
             exportBtn.classList.remove('hidden');
             toggleBtn.innerText = "🔒 退出管理";
-            toggleBtn.className = "px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5";
+            toggleBtn.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5";
             roleBadge.innerText = "高级管理";
             roleBadge.className = "text-xs bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold";
         } else {
             adminDashboard.classList.add('hidden');
             adminCharts.classList.add('hidden');
             adminTableArea.classList.add('hidden');
+            sessionArea.classList.remove('hidden');
             staffTip.classList.remove('hidden');
             if (currentTab === 'billing') {
                 exportBtn.classList.add('hidden');
             }
             toggleBtn.innerText = "⚙️ 管理模式";
-            toggleBtn.className = "px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5";
+            toggleBtn.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer flex items-center gap-1.5";
             roleBadge.innerText = "协同录入";
             roleBadge.className = "text-xs bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-medium";
         }
@@ -558,8 +597,8 @@
         if (tab === 'billing') {
             billingDiv.classList.remove('hidden');
             giftDiv.classList.add('hidden');
-            tabBillingBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
-            tabGiftBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabBillingBtn.className = "px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-indigo-600 text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabGiftBtn.className = "px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-indigo-600 transition flex items-center gap-1.5 cursor-pointer";
             if (!isAdmin) {
                 exportBtn.classList.add('hidden');
             } else {
@@ -569,8 +608,8 @@
         } else {
             billingDiv.classList.add('hidden');
             giftDiv.classList.remove('hidden');
-            tabGiftBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-amber-600 text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
-            tabBillingBtn.className = "px-5 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabGiftBtn.className = "px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-amber-600 text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
+            tabBillingBtn.className = "px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-amber-600 transition flex items-center gap-1.5 cursor-pointer";
             exportBtn.classList.remove('hidden');
         }
     }
@@ -679,6 +718,27 @@
             });
             if (!res.ok) throw new Error((await res.json()).message || `HTTP ${res.status}`);
 
+            // 1. 顶部即时核对提示框
+            const banner = document.getElementById('recentSubmitBanner');
+            const details = document.getElementById('recentSubmitDetails');
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            details.innerHTML = `【时间】${timeStr} ｜ 【账号】${escapeHtml(account_id)} ｜ 【来源】${platform} ｜ 【金额】RM ${totalAmount.toFixed(2)}<br>【项目】${escapeHtml(product_type)} ${note ? `(${escapeHtml(note)})` : ''}`;
+            banner.classList.remove('hidden');
+
+            // 2. 加入本次会话临时历史列表（刷新网页即自动清除）
+            sessionBillingRecords.unshift({
+                time: timeStr,
+                record_date,
+                account_id,
+                platform,
+                product_type,
+                amount: totalAmount,
+                note
+            });
+            renderSessionList();
+
+            // 重置表单输入
             document.getElementById('formAccountId').value = '';
             document.getElementById('formBillingNote').value = '';
             document.getElementById('itemFund').checked = false;
@@ -693,13 +753,47 @@
             if (isAdmin) {
                 await loadRecords();
             }
-            alert(`✅ 登记成功！已录入账号: ${account_id}`);
         } catch (err) {
             alert("保存失败: " + err.message);
         } finally {
             btn.disabled = false;
             btn.innerText = '➕ 保存整笔转账流水';
         }
+    }
+
+    // 渲染客服本次临时列表
+    function renderSessionList() {
+        const container = document.getElementById('sessionHistoryList');
+        const badge = document.getElementById('sessionCountBadge');
+        badge.innerText = `${sessionBillingRecords.length} 笔`;
+
+        if (sessionBillingRecords.length === 0) {
+            container.innerHTML = '<div class="text-center py-5 text-xs text-slate-400">本次尚未录入数据</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        sessionBillingRecords.forEach(item => {
+            const isWX = item.platform === '微信';
+            const badgeClass = isWX ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
+
+            const div = document.createElement('div');
+            div.className = 'p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs';
+            div.innerHTML = `
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="px-1.5 py-0.5 rounded font-bold ${badgeClass}">${item.platform}</span>
+                        <span class="font-bold text-slate-800 text-sm">${escapeHtml(item.account_id)}</span>
+                        <span class="text-slate-400 font-mono text-xs">${item.time}</span>
+                    </div>
+                    <div class="text-slate-600">${escapeHtml(item.product_type)} ${item.note ? `<span class="text-slate-400">(${escapeHtml(item.note)})</span>` : ''}</div>
+                </div>
+                <div class="font-mono font-bold text-indigo-700 text-sm self-end sm:self-center">
+                    RM ${Number(item.amount).toFixed(2)}
+                </div>
+            `;
+            container.appendChild(div);
+        });
     }
 
     function openEditBilling(id) {
@@ -832,16 +926,17 @@
 
     function renderBillingTable(records) {
         const tbody = document.getElementById('recordTableBody');
+        const mobileContainer = document.getElementById('recordMobileCards');
         tbody.innerHTML = '';
+        mobileContainer.innerHTML = '';
+
         if (records.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">暂无任何记录</td></tr>';
+            mobileContainer.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">暂无任何记录</div>';
             return;
         }
 
         records.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-slate-50 transition';
-
             const isWX = (item.platform || '微信') === '微信';
             const platformBadge = isWX 
                 ? `<span class="text-xs px-2 py-0.5 rounded font-medium bg-emerald-100 text-emerald-800">微信</span>`
@@ -855,23 +950,52 @@
                 else if (p.includes('至尊月卡')) badgeStyle = 'bg-purple-100 text-purple-800';
                 else if (p.includes('江湖月卡')) badgeStyle = 'bg-indigo-100 text-indigo-800';
                 else if (p.includes('成长基金')) badgeStyle = 'bg-blue-100 text-blue-800';
-                badgesHtml += `<span class="inline-block text-xs px-2.5 py-0.5 rounded font-medium mr-1.5 mb-1 ${badgeStyle}">${escapeHtml(p)}</span>`;
+                badgesHtml += `<span class="inline-block text-xs px-2 py-0.5 rounded font-medium mr-1.5 mb-1 ${badgeStyle}">${escapeHtml(p)}</span>`;
             });
 
             const noteDisplay = item.note ? `<span class="text-xs text-slate-400 font-normal ml-1">(${escapeHtml(item.note)})</span>` : '';
 
+            // 1. 电脑端标准表格行
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
             tr.innerHTML = `
-                <td class="p-3.5 text-slate-500 font-mono text-xs">${item.record_date}</td>
-                <td class="p-3.5">${platformBadge}</td>
+                <td class="p-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">${item.record_date}</td>
+                <td class="p-3.5 whitespace-nowrap">${platformBadge}</td>
                 <td class="p-3.5 font-bold text-slate-800">${escapeHtml(item.account_id)}</td>
                 <td class="p-3.5">${badgesHtml} ${noteDisplay}</td>
-                <td class="p-3.5 font-bold text-indigo-700 font-mono">RM ${Number(item.amount).toFixed(2)}</td>
-                <td class="p-3.5 text-right space-x-2">
+                <td class="p-3.5 font-bold text-indigo-700 font-mono whitespace-nowrap">RM ${Number(item.amount).toFixed(2)}</td>
+                <td class="p-3.5 text-right space-x-2 whitespace-nowrap">
                     <button type="button" onclick="openEditBilling(${item.id})" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer">修改</button>
                     <button type="button" onclick="deleteBillingItem(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">删除</button>
                 </td>
             `;
             tbody.appendChild(tr);
+
+            // 2. 手机端自适应卡片 (横排展示，不竖排截断)
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-white rounded-lg border border-slate-100 shadow-sm space-y-2';
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        ${platformBadge}
+                        <span class="font-bold text-slate-900 text-sm">${escapeHtml(item.account_id)}</span>
+                    </div>
+                    <div class="text-sm font-black font-mono text-indigo-700">
+                        RM ${Number(item.amount).toFixed(2)}
+                    </div>
+                </div>
+                <div class="text-xs leading-relaxed">
+                    ${badgesHtml} ${noteDisplay}
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-50">
+                    <span class="font-mono">${item.record_date}</span>
+                    <div class="space-x-3">
+                        <button type="button" onclick="openEditBilling(${item.id})" class="text-indigo-600 font-semibold">修改</button>
+                        <button type="button" onclick="deleteBillingItem(${item.id})" class="text-rose-500 font-semibold">删除</button>
+                    </div>
+                </div>
+            `;
+            mobileContainer.appendChild(card);
         });
     }
 
@@ -1115,40 +1239,71 @@
 
     function renderGiftTable(records) {
         const tbody = document.getElementById('giftTableBody');
+        const mobileContainer = document.getElementById('giftMobileCards');
         tbody.innerHTML = '';
+        mobileContainer.innerHTML = '';
 
         if (records.length === 0) {
             tbody.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400">暂无开荒礼包发放记录</td></tr>';
+            mobileContainer.innerHTML = '<div class="p-6 text-center text-slate-400 text-xs">暂无开荒礼包发放记录</div>';
             return;
         }
 
         records.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-slate-50 transition';
-
             const isWX = (item.platform || '微信') === '微信';
             const badgeClass = isWX ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
 
+            // 1. 电脑端标准表格行
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 transition';
             tr.innerHTML = `
-                <td class="p-3.5 text-slate-500 font-mono text-xs">${item.gift_date}</td>
+                <td class="p-3.5 text-slate-500 font-mono text-xs whitespace-nowrap">${item.gift_date}</td>
                 <td class="p-3.5 font-bold text-slate-900">${escapeHtml(item.account_id)}</td>
                 <td class="p-3.5 font-semibold text-amber-900">${escapeHtml(item.player_name)}</td>
-                <td class="p-3.5">
+                <td class="p-3.5 whitespace-nowrap">
                     <span class="text-xs px-2 py-0.5 rounded font-medium ${badgeClass}">${escapeHtml(item.platform || '微信')}</span>
                     <span class="text-xs text-slate-700 font-medium ml-1">${escapeHtml(item.social_name || '-')}</span>
                 </td>
-                <td class="p-3.5">
+                <td class="p-3.5 whitespace-nowrap">
                     <span class="text-xs px-2.5 py-0.5 rounded font-medium bg-amber-100 text-amber-800">
                         ${escapeHtml(item.gift_name)}
                     </span>
                 </td>
                 <td class="p-3.5 text-xs text-slate-500">${escapeHtml(item.note || '-')}</td>
-                <td class="p-3.5 text-right space-x-2">
+                <td class="p-3.5 text-right space-x-2 whitespace-nowrap">
                     <button type="button" onclick="openEditGift(${item.id})" class="text-xs text-amber-600 hover:text-amber-800 hover:underline cursor-pointer">修改</button>
                     <button type="button" onclick="deleteGiftItem(${item.id})" class="text-xs text-rose-500 hover:text-rose-700 hover:underline cursor-pointer">删除</button>
                 </td>
             `;
             tbody.appendChild(tr);
+
+            // 2. 手机端自适应卡片 (彻底解决截图里竖排字 Bug)
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-white rounded-lg border border-slate-100 shadow-sm space-y-2';
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="font-bold text-slate-900 text-sm">${escapeHtml(item.account_id)}</span>
+                        <span class="text-xs font-semibold text-amber-900 ml-1.5">(${escapeHtml(item.player_name)})</span>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded font-medium bg-amber-100 text-amber-800 font-medium whitespace-nowrap">
+                        ${escapeHtml(item.gift_name)}
+                    </span>
+                </div>
+                <div class="text-xs text-slate-600 flex items-center gap-1.5 flex-wrap">
+                    <span class="px-1.5 py-0.5 rounded font-medium ${badgeClass}">${escapeHtml(item.platform || '微信')}</span>
+                    <span class="font-medium text-slate-800">${escapeHtml(item.social_name || '-')}</span>
+                    ${item.note ? `<span class="text-slate-400">· 备注: ${escapeHtml(item.note)}</span>` : ''}
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-400 pt-1 border-t border-slate-50">
+                    <span class="font-mono">${item.gift_date}</span>
+                    <div class="space-x-3">
+                        <button type="button" onclick="openEditGift(${item.id})" class="text-amber-600 font-semibold">修改</button>
+                        <button type="button" onclick="deleteGiftItem(${item.id})" class="text-rose-500 font-semibold">删除</button>
+                    </div>
+                </div>
+            `;
+            mobileContainer.appendChild(card);
         });
     }
 
