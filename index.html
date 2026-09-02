@@ -87,7 +87,6 @@
                     </div>
                 </div>
 
-                <!-- 项目勾选与自定金额 -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
                     <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">选择本次进账包含的项目：</span>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -215,8 +214,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">玩家角色名</label>
-                        <input type="text" id="giftPlayerName" required placeholder="如: 独孤求败"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <input type="text" id="giftPlayerName" required placeholder="如: 独孤求败">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">社交渠道</label>
@@ -294,36 +292,79 @@
 
 </div>
 
-<!-- 充值流水修改弹窗 -->
+<!-- ============================================================== -->
+<!-- 充值流水修改弹窗 (升级为纯勾选按钮操作版)                        -->
+<!-- ============================================================== -->
 <div id="editBillingModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 space-y-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <h3 class="text-base font-bold text-slate-800 border-b pb-2">✏️ 修改充值记录</h3>
         <input type="hidden" id="editBillingId">
-        <div class="space-y-3 text-xs font-semibold text-slate-600">
-            <div>
-                <label class="block mb-1">充值日期</label>
-                <input type="date" id="editBillingDate" class="w-full p-2 border rounded-lg text-sm bg-white">
+        
+        <div class="space-y-4 text-xs font-semibold text-slate-600">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block mb-1">充值日期</label>
+                    <input type="date" id="editBillingDate" class="w-full p-2 border rounded-lg text-sm bg-white">
+                </div>
+                <div>
+                    <label class="block mb-1">玩家账号 / ID</label>
+                    <input type="text" id="editBillingAccountId" class="w-full p-2 border rounded-lg text-sm">
+                </div>
             </div>
-            <div>
-                <label class="block mb-1">玩家账号 / ID</label>
-                <input type="text" id="editBillingAccountId" class="w-full p-2 border rounded-lg text-sm">
+
+            <!-- 点击勾选区域 -->
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                <span class="text-xs font-bold text-slate-700">点击调整包含的项目：</span>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                        <input type="checkbox" id="editItemFund" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
+                        <span class="text-xs font-semibold text-slate-700">成长基金</span>
+                        <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                        <input type="checkbox" id="editItemVipCard" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
+                        <span class="text-xs font-semibold text-slate-700">至尊月卡</span>
+                        <span class="text-xs text-indigo-600 font-bold ml-auto">RM 100</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                        <input type="checkbox" id="editItemNormalCard" onchange="calcEditTotalAmount()" class="w-4 h-4 text-indigo-600 rounded">
+                        <span class="text-xs font-semibold text-slate-700">江湖月卡</span>
+                        <span class="text-xs text-indigo-600 font-bold ml-auto">RM 50</span>
+                    </label>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">购买元宝金额 (RM)</label>
+                        <input type="number" step="0.01" id="editItemYuanbao" oninput="calcEditTotalAmount()" placeholder="输入金额，无则留空"
+                            class="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">其他定制道具 (RM / 备注)</label>
+                        <div class="flex gap-1.5">
+                            <input type="number" step="0.01" id="editItemOtherAmount" oninput="calcEditTotalAmount()" placeholder="金额"
+                                class="w-1/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <input type="text" id="editItemOtherNote" placeholder="道具/礼包备注"
+                                class="w-2/3 px-2 py-1.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div>
-                <label class="block mb-1">项目简述 (多个项目以 + 隔开)</label>
-                <input type="text" id="editBillingProduct" class="w-full p-2 border rounded-lg text-sm font-semibold">
+
+            <div class="flex items-center justify-between p-3 bg-indigo-50/50 rounded-lg border border-indigo-100">
+                <span class="text-xs text-slate-600 font-medium">调整后总金额 (银行转账依据):</span>
+                <span class="text-xl font-black text-indigo-700 font-mono">RM <span id="editDisplayTotal">0.00</span></span>
             </div>
+
             <div>
-                <label class="block mb-1">转账总金额 (RM)</label>
-                <input type="number" step="0.01" id="editBillingAmount" class="w-full p-2 border rounded-lg text-sm text-indigo-700 font-bold">
-            </div>
-            <div>
-                <label class="block mb-1">备注说明</label>
-                <input type="text" id="editBillingNote" class="w-full p-2 border rounded-lg text-sm">
+                <label class="block mb-1">额外流水备注 (选填)</label>
+                <input type="text" id="editBillingNote" placeholder="可选填补充对账备注" class="w-full p-2 border rounded-lg text-sm">
             </div>
         </div>
-        <div class="flex justify-end gap-2 pt-2 border-t">
+
+        <div class="flex justify-end gap-2 pt-3 border-t">
             <button type="button" onclick="closeEditBillingModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-sm font-medium cursor-pointer">取消</button>
-            <button type="button" id="submitEditBillingBtn" onclick="submitEditBilling()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
+            <button type="button" id="submitEditBillingBtn" onclick="submitEditBilling()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold cursor-pointer">保存修改</button>
         </div>
     </div>
 </div>
@@ -457,6 +498,23 @@
         return total;
     }
 
+    // 修改弹窗内的金额自动汇总
+    function calcEditTotalAmount() {
+        let total = 0;
+        if (document.getElementById('editItemFund').checked) total += 50;
+        if (document.getElementById('editItemVipCard').checked) total += 100;
+        if (document.getElementById('editItemNormalCard').checked) total += 50;
+
+        const yb = parseFloat(document.getElementById('editItemYuanbao').value);
+        if (!isNaN(yb) && yb > 0) total += yb;
+
+        const other = parseFloat(document.getElementById('editItemOtherAmount').value);
+        if (!isNaN(other) && other > 0) total += other;
+
+        document.getElementById('editDisplayTotal').innerText = total.toFixed(2);
+        return total;
+    }
+
     // ==============================================================
     // 充值模块
     // ==============================================================
@@ -536,6 +594,7 @@
         }
     }
 
+    // 打开修改弹窗时，自动解析并把旧项目的勾打上
     function openEditBilling(id) {
         const item = allBillingRecords.find(r => r.id === id);
         if (!item) return;
@@ -543,10 +602,35 @@
         document.getElementById('editBillingId').value = item.id;
         document.getElementById('editBillingDate').value = item.record_date;
         document.getElementById('editBillingAccountId').value = item.account_id;
-        document.getElementById('editBillingProduct').value = item.product_type;
-        document.getElementById('editBillingAmount').value = item.amount;
         document.getElementById('editBillingNote').value = item.note || '';
 
+        // 自动解析当前项目的各个组合
+        const pType = item.product_type || '';
+        document.getElementById('editItemFund').checked = pType.includes('成长基金');
+        document.getElementById('editItemVipCard').checked = pType.includes('至尊月卡');
+        document.getElementById('editItemNormalCard').checked = pType.includes('江湖月卡');
+
+        // 提取元宝金额
+        const matchYb = pType.match(/元宝\((\d+(\.\d+)?)\)/);
+        document.getElementById('editItemYuanbao').value = matchYb ? matchYb[1] : (pType === '元宝' ? item.amount : '');
+
+        // 提取其他道具
+        const items = pType.split(' + ');
+        let otherFoundAmt = '';
+        let otherFoundName = '';
+        items.forEach(it => {
+            if (!it.includes('成长基金') && !it.includes('至尊月卡') && !it.includes('江湖月卡') && !it.includes('元宝')) {
+                const matchOther = it.match(/(.*?)\((\d+(\.\d+)?)\)/);
+                if (matchOther) {
+                    otherFoundName = matchOther[1].trim();
+                    otherFoundAmt = matchOther[2];
+                }
+            }
+        });
+        document.getElementById('editItemOtherAmount').value = otherFoundAmt;
+        document.getElementById('editItemOtherNote').value = otherFoundName;
+
+        calcEditTotalAmount();
         document.getElementById('editBillingModal').classList.remove('hidden');
     }
 
@@ -554,18 +638,32 @@
         document.getElementById('editBillingModal').classList.add('hidden');
     }
 
+    // 提交修改：重新组合成标准的项目格式
     async function submitEditBilling() {
         const id = document.getElementById('editBillingId').value;
         const record_date = document.getElementById('editBillingDate').value;
         const account_id = document.getElementById('editBillingAccountId').value.trim();
-        const product_type = document.getElementById('editBillingProduct').value.trim();
-        const amount = parseFloat(document.getElementById('editBillingAmount').value);
         const note = document.getElementById('editBillingNote').value.trim();
+        const totalAmount = calcEditTotalAmount();
 
-        if (!account_id || isNaN(amount) || amount <= 0) {
-            alert('请填写正确的账号与金额！');
-            return;
+        if (!account_id) return alert('请填写玩家账号！');
+        if (totalAmount <= 0) return alert('请至少勾选或输入一个项目金额！');
+
+        const productList = [];
+        if (document.getElementById('editItemFund').checked) productList.push('成长基金(50)');
+        if (document.getElementById('editItemVipCard').checked) productList.push('至尊月卡(100)');
+        if (document.getElementById('editItemNormalCard').checked) productList.push('江湖月卡(50)');
+
+        const yb = parseFloat(document.getElementById('editItemYuanbao').value);
+        if (!isNaN(yb) && yb > 0) productList.push(`元宝(${yb})`);
+
+        const otherAmt = parseFloat(document.getElementById('editItemOtherAmount').value);
+        const otherNote = document.getElementById('editItemOtherNote').value.trim();
+        if (!isNaN(otherAmt) && otherAmt > 0) {
+            productList.push(otherNote ? `${otherNote}(${otherAmt})` : `定制道具(${otherAmt})`);
         }
+
+        const product_type = productList.join(' + ');
 
         const btn = document.getElementById('submitEditBillingBtn');
         btn.disabled = true;
@@ -575,7 +673,7 @@
             const res = await fetch(`${SUPABASE_BASE}/recharge_records?id=eq.${id}`, {
                 method: "PATCH",
                 headers: reqHeaders,
-                body: JSON.stringify({ record_date, account_id, product_type, amount, note })
+                body: JSON.stringify({ record_date, account_id, product_type, amount: totalAmount, note })
             });
 
             if (!res.ok) {
@@ -945,10 +1043,10 @@
         const q = document.getElementById('giftSearchInput').value.trim().toLowerCase();
         const filtered = allGiftRecords.filter(r => 
             (r.account_id || '').toLowerCase().includes(q) || 
-            (r.player_name || '').toLowerCase().includes(q) ||
-            (r.platform || '').toLowerCase().includes(q) ||
-            (r.social_name || '').toLowerCase().includes(q) ||
-            (r.gift_name || '').toLowerCase().includes(q) ||
+            (r.player_name || '').toLowerCase().includes(q) || 
+            (r.platform || '').toLowerCase().includes(q) || 
+            (r.social_name || '').toLowerCase().includes(q) || 
+            (r.gift_name || '').toLowerCase().includes(q) || 
             (r.note || '').toLowerCase().includes(q)
         );
         renderGiftTable(filtered);
